@@ -4,4 +4,4 @@ from . import models
 class SchoolYearSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.SchoolYear
-        fields = ['year']
+        fields = ['id','year']
