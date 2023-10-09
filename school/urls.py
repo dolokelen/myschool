@@ -4,3 +4,5 @@ router = DefaultRouter()
 router.register('years', views.SchoolYearViewSet)
 
 urlpatterns  = router.urls
+
+
