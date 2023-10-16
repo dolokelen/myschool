@@ -1,11 +1,9 @@
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from rest_framework import serializers
 
-
 class UserCreateSerializer(BaseUserCreateSerializer):
     confirm_password = serializers.CharField(
         write_only=True, required=True, style={'input_type': 'password'})
-
     class Meta(BaseUserCreateSerializer.Meta):
         fields = ['id', 'username', 'email', 'first_name',
                   'last_name', 'password', 'confirm_password']
