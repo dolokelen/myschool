@@ -4,6 +4,8 @@ from . import views
 
 router = DefaultRouter()
 router.register('users', views.UserModelViewSet)
+router.register('groups', views.GroupViewSet)
+router.register('permissions', views.PermissionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

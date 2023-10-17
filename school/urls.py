@@ -4,8 +4,6 @@ from . import views
 
 router = DefaultRouter()
 
-router.register('groups', views.GroupViewSet)
-router.register('permissions', views.PermissionViewSet)
 router.register('years', views.SchoolYearViewSet)
 
 urlpatterns = [
