@@ -37,9 +37,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
-        
-class GroupAddUserSerializer(serializers.Serializer):
-    user_ids = serializers.ListField(child=serializers.IntegerField())
 
+class AddGroupsToUserSerializer(serializers.ModelSerializer):
+    group_ids = serializers.ListField(child=serializers.IntegerField())
+    class Meta: 
+        model = User
+        fields = ['id', 'group_ids']
+        
 class GroupRemoveUserSerializer(serializers.Serializer):
     user_ids = serializers.ListField(child=serializers.IntegerField())
