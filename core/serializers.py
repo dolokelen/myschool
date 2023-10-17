@@ -1,5 +1,6 @@
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from rest_framework import serializers
+from .models import User
 
 class UserCreateSerializer(BaseUserCreateSerializer):
     confirm_password = serializers.CharField(
@@ -17,3 +18,15 @@ class UserCreateSerializer(BaseUserCreateSerializer):
     def create(self, validated_data):
         validated_data.pop('confirm_password', None)
         return super().create(validated_data)
+    
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        
+class GroupAddUserSerializer(serializers.Serializer):
+    user_ids = serializers.ListField(child=serializers.IntegerField())
+
+class GroupRemoveUserSerializer(serializers.Serializer):
+    user_ids = serializers.ListField(child=serializers.IntegerField())
