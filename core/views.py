@@ -1,7 +1,6 @@
 from django.contrib.auth.models import Group, Permission
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.viewsets import ModelViewSet
 from .models import User
 from . import serializers
@@ -12,8 +11,8 @@ class GroupViewSet(ModelViewSet):
     
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        permission_ids_to_remove = request.data.get('permissions_to_remove', [])
-        permission_ids_to_add = request.data.get('permissions_to_add', [])
+        permission_ids_to_remove = request.data.get('permission_ids_to_remove', [])
+        permission_ids_to_add = request.data.get('permission_ids_to_add', [])
 
         if permission_ids_to_remove:
             permissions_to_remove = instance.permissions.filter(id__in=permission_ids_to_remove)
@@ -42,6 +41,8 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     
     def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.GetUserAndGroupsSerializer
         if self.request.method == 'PATCH':
             if 'group_ids' in self.request.data:
                 return serializers.AddGroupsToUserSerializer
@@ -51,25 +52,18 @@ class UserViewSet(ModelViewSet):
     
     def partial_update(self, request, *args, **kwargs):
         user = self.get_object()
-        group_ids = request.data.get('group_ids', [])
-        groups = Group.objects.filter(pk__in=group_ids)
-        user.groups.add(*groups)
+        group_to_add_ids = request.data.get('group_to_add_ids', [])
+        group_to_remove_ids = request.data.get('group_to_remove_ids', [])
 
-        return Response({'detail': 'Groups successfully added'})
+        if group_to_add_ids:
+            groups = Group.objects.filter(pk__in=group_to_add_ids)
+            user.groups.add(*groups)
+            return Response({'detail': 'Groups successfully added'})
+        if group_to_remove_ids:
+            groups = Group.objects.filter(pk__in=group_to_remove_ids)
+            user.groups.remove(*groups)
+            return Response({'detail': 'Groups successfully removed'})
+        else:
+            return Response({'detail': 'Sorry no group was selected'})
 
-class AddGroupsToUserView(UpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = serializers.AddGroupsToUserSerializer
 
-# class GroupRemoveUserView(DestroyAPIView):
-#     queryset = Group.objects.all()
-#     serializer_class = serializers.GroupRemoveUserSerializer
-
-#     def perform_destroy(self, instance):
-#         group = self.get_object()
-#         user_ids = self.request.data.get('user_ids', [])
-#         users = User.objects.filter(pk__in=user_ids)
-#         group.user_set.remove(*users)
-
-#         return Response({'detail': 'Successfully removed'}, status=status.HTTP_200_OK)
-    

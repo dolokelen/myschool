@@ -20,7 +20,6 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         validated_data.pop('confirm_password', None)
         return super().create(validated_data)
     
-
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
@@ -28,11 +27,21 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 class GroupSerializer(serializers.ModelSerializer):
     permissions = PermissionSerializer(many=True, read_only=True)
-    users = UserCreateSerializer(many=True, read_only=True, source='user_set')
     class Meta:
         model = Group
-        fields = ['id', 'name', 'permissions', 'users']
+        fields = ['id', 'name', 'permissions']
 
+class SimpleGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
+
+class GetUserAndGroupsSerializer(serializers.ModelSerializer):
+    groups = SimpleGroupSerializer(many=True)
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'groups']
+        
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
