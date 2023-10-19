@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'corsheaders',
+    'debug_toolbar',
     'school', 
     'core'
 ]
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'myschool.urls'
@@ -173,3 +175,9 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'doriamsoft@gmail.com'
 EMAIL_POST_PASSWORD = 'xfzpmntxypfxxqvn'
 EMAIL_USE_TLS = True
+
+
+#DEBUG TOOLBAR IP
+INTERNAL_IPS = [
+    "127.0.0.1",
+]

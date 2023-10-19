@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group, Permission
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -68,5 +69,9 @@ class UserViewSet(ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
             return Response({'detail': 'Record updated successfully'})
+
+
+def index(request):
+    return render(request, 'index.html')
 
 
