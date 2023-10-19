@@ -8,7 +8,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         write_only=True, required=True, style={'input_type': 'password'})
     class Meta(BaseUserCreateSerializer.Meta):
         fields = ['id', 'username', 'email', 'first_name',
-                  'last_name', 'password', 'confirm_password']
+                  'last_name', 'password', 'confirm_password', 'is_active']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
@@ -45,7 +45,7 @@ class GetUserAndGroupsSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email']
+        fields = ['first_name', 'last_name', 'email', 'is_active']
 
 class AddGroupsToUserSerializer(serializers.ModelSerializer):
     group_ids = serializers.ListField(child=serializers.IntegerField())

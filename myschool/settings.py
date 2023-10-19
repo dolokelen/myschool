@@ -141,6 +141,13 @@ REST_FRAMEWORK = {
 }
 
 DJOSER = {
+    #If sending activation email works remove is_active from the User model.
+    # 'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    # 'SEND_CONFIRMATION_EMAIL': True,
+    # 'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+    # 'ACTIVATION_URL': 'activate/{uid}/{token}',
+    # 'SEND_ACTIVATION_EMAIL': True ,
+
     'SERIALIZERS': {
         'user_create': 'core.serializers.UserCreateSerializer'
     }
@@ -149,8 +156,9 @@ DJOSER = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "BLACKLIST_AFTER_ROTATION": True,  
-    "AUTH_HEADER_TYPES": ("Bearer", 'JWT'),  
+    # "BLACKLIST_AFTER_ROTATION": True, #I don't know it's meaning! 
+    "AUTH_HEADER_TYPES": ('JWT',), 
+    # "AUTH_HEADER_TYPES": ("Bearer", 'JWT'),  
 }
 
 
@@ -158,3 +166,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173'
 ]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'doriamsoft@gmail.com'
+EMAIL_POST_PASSWORD = 'xfzpmntxypfxxqvn'
+EMAIL_USE_TLS = True

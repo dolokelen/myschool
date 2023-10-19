@@ -64,6 +64,9 @@ class UserViewSet(ModelViewSet):
             user.groups.remove(*groups)
             return Response({'detail': 'Groups successfully removed'})
         else:
-            return Response({'detail': 'Sorry no group was selected'})
+            serializer = serializers.UserUpdateSerializer(user, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+            return Response({'detail': 'Record updated successfully'})
 
 
