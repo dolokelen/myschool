@@ -5,9 +5,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from .models import User
 from . import serializers
+from . import permissions
 
 class GroupViewSet(ModelViewSet):
-    queryset = Group.objects.all()
+    queryset = Group.objects.prefetch_related('permissions').all()
     serializer_class = serializers.GroupSerializer
     
     def partial_update(self, request, *args, **kwargs):
@@ -38,18 +39,26 @@ class PermissionViewSet(ModelViewSet):
     serializer_class = serializers.PermissionSerializer
 
 class UserViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch']
-    queryset = User.objects.all()
-    
+    queryset = User.objects.prefetch_related('groups').all()
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
+        
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return serializers.GetUserAndGroupsSerializer
+            return serializers.UserGroupsSerializer
         if self.request.method == 'PATCH':
             if 'group_ids' in self.request.data:
                 return serializers.AddGroupsToUserSerializer
             return serializers.UserUpdateSerializer
-        else:
-            return serializers.UserCreateSerializer
+        return serializers.UserCreateSerializer
     
     def partial_update(self, request, *args, **kwargs):
         user = self.get_object()
