@@ -9,6 +9,8 @@ router.register('permissions', views.PermissionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('user_groups/<int:pk>/', views.ListUserGroups.as_view()),
+
     path('index', views.index, name='index')
 ]
 

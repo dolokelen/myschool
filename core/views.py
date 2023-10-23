@@ -3,6 +3,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import ListAPIView 
 from .models import User
 from . import serializers
 from . import permissions
@@ -40,6 +41,7 @@ class PermissionViewSet(ModelViewSet):
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.prefetch_related('groups').all()
+    # permission_classes = [permissions.FullDjangoModelPermissions] #New
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -50,7 +52,7 @@ class UserViewSet(ModelViewSet):
             return [permissions.UpdateModelPermission()]
         if self.request.method == 'DELETE':
             return [permissions.DeleteModelPermission()]
-        
+    
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.UserGroupsSerializer
@@ -79,8 +81,17 @@ class UserViewSet(ModelViewSet):
                 serializer.save()
             return Response({'detail': 'Record updated successfully'})
 
+class ListUserGroups(ListAPIView):
+    serializer_class = serializers.GroupSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs['pk']
+        groups = Group.objects.filter(user=user_id).prefetch_related('permissions').all()
+        return groups
+    
 
 def index(request):
     return render(request, 'index.html')
 
 
+    
