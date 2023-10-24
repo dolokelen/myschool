@@ -4,9 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import ListAPIView 
-from .models import User
-from . import serializers
-from . import permissions
+from .models import User 
+from . import serializers, permissions
 
 class GroupViewSet(ModelViewSet):
     queryset = Group.objects.prefetch_related('permissions').all()
