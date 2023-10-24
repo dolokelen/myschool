@@ -1,5 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
-from . import models, serializers, permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from . import models, serializers, permissions, filters
 
 
 class SchoolYearViewSet(ModelViewSet):
@@ -24,6 +26,10 @@ class DepartmentViewSet(ModelViewSet):
 class CourseViewSet(ModelViewSet):
     queryset = models.Course.objects.select_related('department').all()
     serializer_class = serializers.CourseSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = filters.CourseFilter
+    search_fields = ['code', 'title']
+    ordering_fields = ['price_per_credit', 'credit', 'additional_fee']
 
 class SemesterViewSet(ModelViewSet):
     queryset = models.Semester.objects.select_related('school_year').prefetch_related('courses').all()

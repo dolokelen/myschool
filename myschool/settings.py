@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'djoser',
     'corsheaders',
     'debug_toolbar',
+    'django_filters',
     'school', 
     'core'
 ]
