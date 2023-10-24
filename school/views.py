@@ -17,6 +17,14 @@ class SchoolYearViewSet(ModelViewSet):
         if self.request.method == 'DELETE':
             return [permissions.DeleteModelPermission()]
     
+class DepartmentViewSet(ModelViewSet):
+    queryset = models.Department.objects.all()
+    serializer_class = serializers.DepartmentSerializer
 
+class CourseViewSet(ModelViewSet):
+    queryset = models.Course.objects.select_related('department').all()
+    serializer_class = serializers.CourseSerializer
 
-
+class SemesterViewSet(ModelViewSet):
+    queryset = models.Semester.objects.select_related('school_year').prefetch_related('courses').all()
+    serializer_class = serializers.SemesterSerializer
