@@ -20,8 +20,18 @@ class SchoolYearViewSet(ModelViewSet):
             return [permissions.DeleteModelPermission()]
     
 class DepartmentViewSet(ModelViewSet):
-    queryset = models.Department.objects.all()
+    queryset = models.Department.objects.prefetch_related('courses').all()
     serializer_class = serializers.DepartmentSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
 
 class CourseViewSet(ModelViewSet):
     queryset = models.Course.objects.select_related('prerequisite').select_related('department').all()

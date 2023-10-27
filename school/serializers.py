@@ -8,9 +8,13 @@ class SchoolYearSerializer(serializers.ModelSerializer):
         fields = ['id', 'year']
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    number_of_courses = serializers.SerializerMethodField()
+
+    def get_number_of_courses(self, department):
+        return department.courses.count()
     class Meta:
         model = models.Department
-        fields = ['id', 'name', 'budget', 'duty']
+        fields = ['id', 'name', 'budget', 'duty', 'number_of_courses', 'created_at']
 
 class ReadCourseSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField()
@@ -39,7 +43,6 @@ class CourseSerializer(serializers.ModelSerializer):
         model = models.Course
         fields = ['id', 'code', 'title', 'department', 'level', 'prerequisite',
                   'price_per_credit', 'credit', 'additional_fee', 'total_price']
-
 
 class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
