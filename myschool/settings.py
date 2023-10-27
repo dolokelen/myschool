@@ -140,7 +140,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
-    )
+    ),
+    'COERCE_DECIMAL_TO_STRING': False,
 }
 
 DJOSER = {
