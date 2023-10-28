@@ -1,8 +1,5 @@
 from django.db import models, transaction
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from .validators import validate_school_year
-
 
 class SchoolYear(models.Model):
     year = models.PositiveIntegerField(
@@ -78,23 +75,9 @@ class Semester(models.Model):
             previous_semesters.update(is_current=False)
 
             return super().save(*args, **kwargs)
+
     class Meta:
         unique_together = [['name', 'school_year']]
 
     def __str__(self) -> str:
         return self.name
-
-class Address(models.Model):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey()
-    country = models.CharField(max_length=50)
-    county = models.CharField(max_length=50)
-    city = models.CharField(max_length=50)
-    district = models.CharField(max_length=50)
-    community = models.CharField(max_length=150)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self) -> str:
-        return f'{self.county}, {self.city}, {self.community} '
-
