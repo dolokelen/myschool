@@ -61,6 +61,15 @@ class SemesterViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     ordering_fields = ['name', 'current_semester']
 
+    def partial_update(self, request, *args, **kwargs):
+        semester = self.get_object()
+        courses_to_add_ids = request.data.get('courses_to_add_ids', [])
+        existing_courses = semester.courses.all()
+        existing_courses_ids = existing_courses.values_list('id', flat=True)
+        combined_courses = list(existing_courses_ids) + courses_to_add_ids
+        semester.courses.set(combined_courses)
+        return super().partial_update(request, *args, **kwargs)
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadSemesterSerializer
