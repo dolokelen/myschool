@@ -30,7 +30,7 @@ class Status(models.Model):
     class Meta:
         abstract = True
 
-class Course(Status):
+class Course(Status):#preload any 1-m or m-m fields in SemesterSerializer
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='courses')
     code = models.CharField(max_length=50, unique=True)
     prerequisite = models.ForeignKey(

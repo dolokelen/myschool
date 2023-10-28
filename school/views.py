@@ -56,5 +56,23 @@ class CourseViewSet(ModelViewSet):
             return [permissions.DeleteModelPermission()]
     
 class SemesterViewSet(ModelViewSet):
-    queryset = models.Semester.objects.select_related('school_year').prefetch_related('courses').all()
-    serializer_class = serializers.SemesterSerializer
+    queryset = models.Semester.objects.select_related('school_year').\
+        prefetch_related('courses').all()
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['name']
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadSemesterSerializer
+        return serializers.SemesterSerializer
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
+    
