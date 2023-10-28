@@ -78,3 +78,46 @@ class SemesterSerializer(serializers.ModelSerializer):
         model = models.Semester
         fields = ['id', 'name', 'school_year', 'enrollment_start_date',
                   'enrollment_end_date', 'start_date', 'end_date', 'courses']
+
+
+# class AddressSerializer(serializers.ModelSerializer):
+#     content_type = serializers.SerializerMethodField()
+#     object_id = serializers.SerializerMethodField()
+
+#     def get_content_type(self, obj):
+#         department = self.context['department']
+#         return department
+    
+#     def get_object_id(self, obj):
+#         department = self.context['department']
+#         department_id = department.get(id=1)  # will get it from the url once working.
+#         return department_id
+
+#     def create(self, validated_data):
+#         department = self.context['department']
+#         department_id = department.get(id=1)
+#         address = models.Address.objects.create(
+#             content_type=department, object_id=department_id, **validated_data)
+#         return address
+
+#     class Meta:
+#         model = models.Address
+#         fields = ['id', 'content_type', 'object_id', 'country',
+#                   'county', 'city', 'district', 'community']
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        content_type = self.context.get('department')
+        object_id = validated_data.get('object_id')  # Extract object_id from the request data
+
+        if content_type and object_id:
+            address = models.Address.objects.create(
+                content_type=content_type, object_id=object_id, **validated_data)
+            return address
+        else:
+            raise serializers.ValidationError("Department and object_id are required.")
+
+    class Meta:
+        model = models.Address
+        fields = ['id', 'content_type', 'object_id', 'country', 'county', 'city', 'district', 'community']
