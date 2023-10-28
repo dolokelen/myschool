@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from . import models
 
@@ -51,12 +52,13 @@ class ReadSemesterSerializer(serializers.ModelSerializer):
     class Meta: 
         model = models.Semester
         fields = ['id', 'name', 'school_year', 'enrollment_start_date',
-                  'enrollment_end_date', 'start_date', 'end_date', 'courses']
+                  'enrollment_end_date', 'start_date', 'end_date', 'current_semester', 'courses']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
     courses = CourseSerializer(many=True, read_only=True)
 
+    @transaction.atomic()
     def create(self, validated_data):
         semester = models.Semester.objects.create(**validated_data)
         courses = models.Course.objects \

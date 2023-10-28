@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from .validators import validate_school_year
 
 class SchoolYear(models.Model):
@@ -7,6 +7,7 @@ class SchoolYear(models.Model):
 
     def __str__(self) -> str:
         return str(self.year)
+
 
 class Department(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -18,6 +19,7 @@ class Department(models.Model):
     def __str__(self) -> str:
         return self.name
 
+
 class Status(models.Model):
     STATUS_CHOICES = (
         ("FR", "Freshman"),
@@ -27,11 +29,14 @@ class Status(models.Model):
         ("GR", "Graduate"),
     )
     level = models.CharField(max_length=2, choices=STATUS_CHOICES)
+
     class Meta:
         abstract = True
 
-class Course(Status):#preload any 1-m or m-m fields in SemesterSerializer
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='courses')
+
+class Course(Status):  # preload any 1-m or m-m fields in SemesterSerializer
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name='courses')
     code = models.CharField(max_length=50, unique=True)
     prerequisite = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='prerequisites')
@@ -43,6 +48,7 @@ class Course(Status):#preload any 1-m or m-m fields in SemesterSerializer
 
     def __str__(self) -> str:
         return self.code
+
 
 class Semester(models.Model):
     NAME_CHOICES = (
@@ -58,10 +64,20 @@ class Semester(models.Model):
     enrollment_end_date = models.DateField()
     start_date = models.DateField()
     end_date = models.DateField()
+    current_semester = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self._state.adding:
+                self.current_semester = True
+
+            previous_semesters = Semester.objects.filter(current_semester=True)
+            previous_semesters.update(current_semester=False)
+
+            return super().save(*args, **kwargs)
+
     class Meta:
         unique_together = [['name', 'school_year']]
 
     def __str__(self) -> str:
         return self.name
-
-

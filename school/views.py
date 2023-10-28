@@ -59,7 +59,7 @@ class SemesterViewSet(ModelViewSet):
     queryset = models.Semester.objects.select_related('school_year').\
         prefetch_related('courses').all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    ordering_fields = ['name']
+    ordering_fields = ['name', 'current_semester']
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
