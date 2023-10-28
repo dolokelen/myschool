@@ -64,15 +64,15 @@ class Semester(models.Model):
     enrollment_end_date = models.DateField()
     start_date = models.DateField()
     end_date = models.DateField()
-    current_semester = models.BooleanField(default=False)
+    is_current = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
             if self._state.adding:
-                self.current_semester = True
+                self.is_current = True
 
-            previous_semesters = Semester.objects.filter(current_semester=True)
-            previous_semesters.update(current_semester=False)
+            previous_semesters = Semester.objects.filter(is_current=True)
+            previous_semesters.update(is_current=False)
 
             return super().save(*args, **kwargs)
 

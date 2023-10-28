@@ -59,7 +59,7 @@ class SemesterViewSet(ModelViewSet):
     queryset = models.Semester.objects.select_related('school_year').\
         prefetch_related('courses').all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    ordering_fields = ['name', 'current_semester']
+    ordering_fields = ['name', 'is_current']
 
     def partial_update(self, request, *args, **kwargs):
         semester = self.get_object()

@@ -58,7 +58,7 @@ class ReadSemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Semester
         fields = ['id', 'name', 'school_year', 'enrollment_start_date',
-                  'enrollment_end_date', 'start_date', 'end_date', 'current_semester', 'courses']
+                  'enrollment_end_date', 'start_date', 'end_date', 'is_current', 'courses']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
