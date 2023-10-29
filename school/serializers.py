@@ -21,6 +21,30 @@ class DepartmentSerializer(serializers.ModelSerializer):
                   'number_of_courses', 'created_at']
 
 
+class ReadDepartmentAddressSerializer(serializers.ModelSerializer):
+    department = serializers.StringRelatedField()
+    class Meta:
+        model = models.DepartmentAddress
+        fields = ['country',
+                  'county', 'city', 'district', 'community', 'department']
+
+
+class DepartmentAddressSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        department_id = self.context['department_id']
+        print('Department id:', department_id)
+        if department_id:
+            instance = models.DepartmentAddress.objects.create(
+                department_id=department_id, **validated_data)
+            return instance
+
+    class Meta:
+        model = models.DepartmentAddress
+        fields = ['country',
+                  'county', 'city', 'district', 'community']
+
+
 class ReadCourseSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField()
     prerequisite = serializers.StringRelatedField()

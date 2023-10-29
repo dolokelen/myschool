@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from .validators import validate_school_year
 
+
 class SchoolYear(models.Model):
     year = models.PositiveIntegerField(
         unique=True, validators=[validate_school_year])
@@ -18,6 +19,29 @@ class Department(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class DepartmentAddress(models.Model):
+    department = models.OneToOneField(
+        Department, on_delete=models.CASCADE, primary_key=True)
+    country = models.CharField(max_length=50)
+    county = models.CharField(max_length=50)
+    city = models.CharField(max_length=50)
+    district = models.CharField(max_length=50)
+    community = models.CharField(max_length=200)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f'{self.county}, {self.city}, {self.community} '
+
+
+class DepartmentContact(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+
+    def __str__(self) -> str:
+        return self.email
 
 
 class Status(models.Model):
