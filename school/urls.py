@@ -10,7 +10,8 @@ router.register('semesters', views.SemesterViewSet)
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')
-departments_router.register('address', views.DepartmentAddressViewSet)
+departments_router.register('address', views.DepartmentAddressViewSet, basename='department-address')
+departments_router.register('contacts', views.DepartmentContactViewSet, basename='department-contacts')
 
 urlpatterns = [
     path("", include(router.urls)),

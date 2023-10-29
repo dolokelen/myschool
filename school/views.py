@@ -24,21 +24,18 @@ class DepartmentViewSet(ModelViewSet):
     queryset = models.Department.objects.prefetch_related('courses').all()
     serializer_class = serializers.DepartmentSerializer
 
-    # def get_permissions(self):
-    #     if self.request.method == 'GET':
-    #         return [permissions.ReadModelPermission()]
-    #     if self.request.method == 'POST':
-    #         return [permissions.CreateModelPermission()]
-    #     if self.request.method in ['PUT', 'PATCH']:
-    #         return [permissions.UpdateModelPermission()]
-    #     if self.request.method == 'DELETE':
-    #         return [permissions.DeleteModelPermission()]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
 
 
 class DepartmentAddressViewSet(ModelViewSet):
-    queryset = models.DepartmentAddress.objects.select_related(
-        'department').all()
-
     def get_queryset(self):
         department_address = models.DepartmentAddress.objects.filter(
             department=self.kwargs['departments_pk'])
@@ -51,6 +48,21 @@ class DepartmentAddressViewSet(ModelViewSet):
         if self.request.method == 'GET':
             return serializers.ReadDepartmentAddressSerializer
         return serializers.DepartmentAddressSerializer
+
+
+class DepartmentContactViewSet(ModelViewSet):
+    def get_queryset(self):
+        department_contact = models.DepartmentContact.objects.filter(
+            department=self.kwargs['departments_pk'])
+        return department_contact
+
+    def get_serializer_context(self):
+        return {'department_id': self.kwargs['departments_pk']}
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadDepartmentContactSerializer
+        return serializers.DepartmentContactSerializer
 
 
 class CourseViewSet(ModelViewSet):
