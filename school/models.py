@@ -23,7 +23,7 @@ class Department(models.Model):
 
 class DepartmentAddress(models.Model):
     department = models.OneToOneField(
-        Department, on_delete=models.CASCADE, primary_key=True)
+        Department, on_delete=models.CASCADE, primary_key=True, related_name='departmentaddress')
     country = models.CharField(max_length=50)
     county = models.CharField(max_length=50)
     city = models.CharField(max_length=50)

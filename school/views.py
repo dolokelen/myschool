@@ -21,7 +21,8 @@ class SchoolYearViewSet(ModelViewSet):
 
 
 class DepartmentViewSet(ModelViewSet):
-    queryset = models.Department.objects.prefetch_related('courses').all()
+    queryset = models.Department.objects.prefetch_related('courses')\
+        .select_related('departmentaddress').all()
     serializer_class = serializers.DepartmentSerializer
 
     def get_permissions(self):
@@ -36,6 +37,8 @@ class DepartmentViewSet(ModelViewSet):
 
 
 class DepartmentAddressViewSet(ModelViewSet):
+    serializer_class = serializers.DepartmentAddressSerializer
+
     def get_queryset(self):
         department_address = models.DepartmentAddress.objects.filter(
             department=self.kwargs['departments_pk'])
@@ -44,13 +47,10 @@ class DepartmentAddressViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'department_id': self.kwargs['departments_pk']}
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.ReadDepartmentAddressSerializer
-        return serializers.DepartmentAddressSerializer
-
 
 class DepartmentContactViewSet(ModelViewSet):
+    serializer_class = serializers.DepartmentContactSerializer
+
     def get_queryset(self):
         department_contact = models.DepartmentContact.objects.filter(
             department=self.kwargs['departments_pk'])
@@ -58,11 +58,6 @@ class DepartmentContactViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         return {'department_id': self.kwargs['departments_pk']}
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return serializers.ReadDepartmentContactSerializer
-        return serializers.DepartmentContactSerializer
 
 
 class CourseViewSet(ModelViewSet):
