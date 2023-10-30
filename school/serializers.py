@@ -61,7 +61,7 @@ class DepartmentContactSerializer(serializers.ModelSerializer):
         fields = ['id', 'phone', 'email', 'department']
 
 
-class ReadCourseSerializer(serializers.ModelSerializer):#Review its impact and possibly delete it!!!
+class ReadCourseSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField()
     prerequisite = serializers.StringRelatedField()
     level = serializers.SerializerMethodField()

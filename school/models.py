@@ -36,7 +36,8 @@ class DepartmentAddress(models.Model):
 
 
 class DepartmentContact(models.Model):
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE, related_name='departmentcontact')
     phone = models.CharField(max_length=20)
     email = models.EmailField()
 
