@@ -25,27 +25,6 @@ class DepartmentAddressSerializer(serializers.ModelSerializer):
                   'county', 'city', 'district', 'community', 'department']
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
-    number_of_courses = serializers.SerializerMethodField()
-    departmentaddress = DepartmentAddressSerializer()
-
-    def get_number_of_courses(self, department):
-        return department.courses.count()
-
-    def create(self, validated_data):
-        department_address_data = validated_data.pop('departmentaddress')
-        instance = models.Department.objects.create(**validated_data)
-        models.DepartmentAddress.objects.create(
-            department_id=instance.id, **department_address_data)
-
-        return instance
-
-    class Meta:
-        model = models.Department
-        fields = ['id', 'name', 'budget', 'duty',
-                  'number_of_courses', 'created_at', 'departmentaddress']
-
-
 class DepartmentContactSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField()
 
@@ -59,6 +38,35 @@ class DepartmentContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.DepartmentContact
         fields = ['id', 'phone', 'email', 'department']
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    departmentaddress = DepartmentAddressSerializer()
+    departmentcontact = DepartmentContactSerializer(many=True)
+    number_of_courses = serializers.SerializerMethodField()
+
+    def get_number_of_courses(self, department):
+        return department.courses.count()
+
+    @transaction.atomic()
+    def create(self, validated_data):
+        department_address_data = validated_data.pop('departmentaddress')
+        department_contact_data = validated_data.pop('departmentcontact')
+
+        instance = models.Department.objects.create(**validated_data)
+        models.DepartmentAddress.objects.create(
+            department_id=instance.id, **department_address_data)
+
+        for contact_data in department_contact_data:
+            models.DepartmentContact.objects.create(
+                department_id=instance.id, **contact_data)
+
+        return instance
+
+    class Meta:
+        model = models.Department
+        fields = ['id', 'name', 'budget', 'duty',
+                  'number_of_courses', 'created_at', 'departmentaddress', 'departmentcontact']
 
 
 class ReadCourseSerializer(serializers.ModelSerializer):

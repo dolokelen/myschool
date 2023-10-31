@@ -22,7 +22,7 @@ class SchoolYearViewSet(ModelViewSet):
 
 class DepartmentViewSet(ModelViewSet):
     queryset = models.Department.objects.prefetch_related('courses')\
-        .select_related('departmentaddress').all()
+        .select_related('departmentaddress').prefetch_related('departmentcontact').all()
     serializer_class = serializers.DepartmentSerializer
 
     def get_permissions(self):
