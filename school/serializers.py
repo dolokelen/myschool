@@ -126,3 +126,33 @@ class SemesterSerializer(serializers.ModelSerializer):
         model = models.Semester
         fields = ['id', 'name', 'school_year', 'enrollment_start_date',
                   'enrollment_end_date', 'start_date', 'end_date', 'courses']
+
+
+class BuildingAddressSerializer(serializers.ModelSerializer):
+       def create(self, validated_data):
+           building_id = self.context['building_id']
+           instance = models.BuildingAddress.objects.create(building_id=building_id, **validated_data)
+          
+           return instance
+      
+       class Meta:
+        model = models.BuildingAddress
+        fields = ['country', 'county', 'city', 'district', 'community']
+
+
+
+class BuildingSerializer(serializers.ModelSerializer):
+    buildingaddress = BuildingAddressSerializer()
+
+    @transaction.atomic()
+    def create(self, validated_data):
+        address_data = validated_data.pop('buildingaddress')
+        instance = models.Building.objects.create(**validated_data)
+        models.BuildingAddress.objects.create(building_id=instance.id, **address_data)
+
+        return instance
+    
+    class Meta:
+        model = models.Building
+        fields = ['id', 'name', 'dimension', 'office_counts',
+                  'classroom_counts', 'toilet_counts', 'date_constructed', 'buildingaddress']

@@ -113,3 +113,20 @@ class SemesterViewSet(ModelViewSet):
             return [permissions.UpdateModelPermission()]
         if self.request.method == 'DELETE':
             return [permissions.DeleteModelPermission()]
+
+
+class BuildingViewSet(ModelViewSet):
+    queryset = models.Building.objects.select_related('buildingaddress').all()
+    serializer_class = serializers.BuildingSerializer
+
+    
+class BuildingAddressViewSet(ModelViewSet):
+    serializer_class = serializers.BuildingAddressSerializer
+
+    def get_queryset(self):
+        building_address = models.BuildingAddress.objects.filter(building_id=self.kwargs['buildings_pk'])
+
+        return building_address
+    
+    def get_serializer_context(self):
+        return {'building_id': self.kwargs['buildings_pk']}
