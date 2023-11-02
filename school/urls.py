@@ -8,6 +8,7 @@ router.register('years', views.SchoolYearViewSet)
 router.register('courses', views.CourseViewSet)
 router.register('semesters', views.SemesterViewSet)
 router.register('buildings', views.BuildingViewSet)
+router.register('offices', views.OfficeViewSet)
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')

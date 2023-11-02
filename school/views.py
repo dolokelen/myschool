@@ -119,14 +119,44 @@ class BuildingViewSet(ModelViewSet):
     queryset = models.Building.objects.select_related('buildingaddress').all()
     serializer_class = serializers.BuildingSerializer
 
-    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
+
+
 class BuildingAddressViewSet(ModelViewSet):
     serializer_class = serializers.BuildingAddressSerializer
 
     def get_queryset(self):
-        building_address = models.BuildingAddress.objects.filter(building_id=self.kwargs['buildings_pk'])
+        building_address = models.BuildingAddress.objects.filter(
+            building_id=self.kwargs['buildings_pk'])
 
         return building_address
-    
+
     def get_serializer_context(self):
         return {'building_id': self.kwargs['buildings_pk']}
+
+
+class OfficeViewSet(ModelViewSet):
+    queryset = models.Office.objects.select_related('building').all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadOfficeSerializer
+        return serializers.OfficeSerializer
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.ReadModelPermission()]
+        if self.request.method == 'POST':
+            return [permissions.CreateModelPermission()]
+        if self.request.method in ['PUT', 'PATCH']:
+            return [permissions.UpdateModelPermission()]
+        if self.request.method == 'DELETE':
+            return [permissions.DeleteModelPermission()]
