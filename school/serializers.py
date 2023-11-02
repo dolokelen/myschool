@@ -100,8 +100,8 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class ReadSemesterSerializer(serializers.ModelSerializer):
-    school_year = serializers.StringRelatedField()
-    courses = CourseSerializer(many=True)
+    school_year = SchoolYearSerializer(read_only=True)
+    courses = CourseSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Semester
@@ -111,6 +111,7 @@ class ReadSemesterSerializer(serializers.ModelSerializer):
 
 class SemesterSerializer(serializers.ModelSerializer):
     courses = CourseSerializer(many=True, read_only=True)
+
 
     @transaction.atomic()
     def create(self, validated_data):
