@@ -160,3 +160,14 @@ class OfficeViewSet(ModelViewSet):
             return [permissions.UpdateModelPermission()]
         if self.request.method == 'DELETE':
             return [permissions.DeleteModelPermission()]
+
+
+class SemesterDocumentViewSet(ModelViewSet):
+    serializer_class = serializers.SemesterDocumentSerializer
+
+    def get_queryset(self):
+        semester_id = self.kwargs['semesters_pk']
+        if self.request.method == 'GET' and semester_id:
+            queryset = models.SemesterDocument.objects.filter(semester_id=semester_id)
+            return queryset
+        return models.SemesterDocument.objects.all()

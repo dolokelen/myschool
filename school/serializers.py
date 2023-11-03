@@ -112,7 +112,6 @@ class ReadSemesterSerializer(serializers.ModelSerializer):
 class SemesterSerializer(serializers.ModelSerializer):
     courses = CourseSerializer(many=True, read_only=True)
 
-
     @transaction.atomic()
     def create(self, validated_data):
         semester = models.Semester.objects.create(**validated_data)
@@ -127,6 +126,12 @@ class SemesterSerializer(serializers.ModelSerializer):
         model = models.Semester
         fields = ['id', 'name', 'school_year', 'enrollment_start_date',
                   'enrollment_end_date', 'start_date', 'end_date', 'courses']
+
+
+class SemesterDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SemesterDocument
+        fields = ['id', 'file_type', 'institution_name', 'file', 'semester', 'date_achieved']
 
 
 class BuildingAddressSerializer(serializers.ModelSerializer):
@@ -161,13 +166,14 @@ class BuildingSerializer(serializers.ModelSerializer):
 
 
 class SimpleBuildingSerializer(serializers.ModelSerializer):
-    class Meta: 
+    class Meta:
         model = models.Building
         fields = ['id', 'name']
 
 
 class ReadOfficeSerializer(serializers.ModelSerializer):
     building = SimpleBuildingSerializer(read_only=True)
+
     class Meta:
         model = models.Office
         fields = ['id', 'dimension', 'building']

@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.core.validators import FileExtensionValidator
 from .validators import validate_school_year
 
 
@@ -146,4 +147,34 @@ class Office(models.Model):
     dimension = models.CharField(max_length=100)
 
     def __str__(self) -> str:
-        return f'{self.building} - {self.id}'  
+        return f'{self.building} - {self.id}'
+
+
+class Document(models.Model):
+    FILE_CHOICES = (
+        ('SCHOLAR', 'Scholarship'),
+        ('ACADEMIC', 'Academic'),
+        ('MEDICAL', 'Medical'),
+        ('EMP', 'Employeement'),
+        ('PROMO', 'Promotion'),
+        ('WARNING', 'Warning'),
+        ('SUSPEN', 'Suspension'),
+        ('JOB', 'Job Related'),
+        ('LEAVE', 'Leave'),
+    )
+    file_type = models.CharField(max_length=8, choices=FILE_CHOICES)
+    institution_name = models.CharField(max_length=150)
+    file = models.FileField(upload_to='school/documents',
+                            validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
+    date_achieved = models.DateField()
+
+    def __str__(self) -> str:
+        return self.file_type
+
+    class Meta:
+        abstract = True
+
+
+class SemesterDocument(Document):
+    semester = models.ForeignKey(
+        Semester, on_delete=models.CASCADE, related_name='documents')
