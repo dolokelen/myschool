@@ -146,4 +146,4 @@ class Office(models.Model):
     dimension = models.CharField(max_length=100)
 
     def __str__(self) -> str:
-        return f'{self.building} - {self.id}'
+        return f'{self.building} - {self.id}'  
