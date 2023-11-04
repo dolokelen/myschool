@@ -1,5 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
+from core.serializers import UserCreateSerializer
+from core.models import User
 from . import models
 
 
@@ -128,12 +130,6 @@ class SemesterSerializer(serializers.ModelSerializer):
                   'enrollment_end_date', 'start_date', 'end_date', 'courses']
 
 
-class SemesterDocumentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.SemesterDocument
-        fields = ['id', 'file_type', 'institution_name', 'file', 'semester', 'date_achieved']
-
-
 class BuildingAddressSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         building_id = self.context['building_id']
@@ -185,3 +181,29 @@ class OfficeSerializer(serializers.ModelSerializer):
         fields = ['id', 'dimension', 'building']
 
 
+class EmployeeSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+
+    @transaction.atomic()
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user_data.pop('confirm_password')
+        user = User.objects.create(**user_data)
+        instance = models.Employee.objects.create(
+            user_id=user.id, **validated_data)
+
+        return instance
+
+    class Meta:
+        model = models.Employee
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+                  'religion', 'salary', 'term_of_reference', 'image', 'department', 'supervisor', 'office']
+
+
+class EmployeeUpdateSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+
+    class Meta:
+        model = models.Employee
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+                  'religion', 'salary', 'department', 'supervisor', 'office']

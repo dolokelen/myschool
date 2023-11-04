@@ -1,6 +1,7 @@
 from django.db import models, transaction
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from .validators import validate_school_year
+from .validators import validate_school_year, validate_file_size
 
 
 class SchoolYear(models.Model):
@@ -12,6 +13,10 @@ class SchoolYear(models.Model):
 
 
 class Department(models.Model):
+    # director = models.OneToOneField(
+    #     'Employee', on_delete=models.SET_NULL, blank=True, null=True, related_name='director')
+    # deputy_director = models.OneToOneField(
+    #     'Employee', on_delete=models.SET_NULL, blank=True, null=True, related_name='deputydirector')
     name = models.CharField(max_length=200, unique=True)
     budget = models.DecimalField(max_digits=8, decimal_places=2)
     duty = models.TextField()
@@ -103,6 +108,8 @@ class Semester(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_current = models.BooleanField(default=False)
+    # program_overview = models.FileField(upload_to='school/semester', validators=[
+    #                                     FileExtensionValidator(allowed_extensions=['pdf'])])
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -147,7 +154,8 @@ class Office(models.Model):
     dimension = models.CharField(max_length=100)
 
     def __str__(self) -> str:
-        return f'{self.building} - {self.id}'
+        return f'{self.building} - {self.id}'#This is very terrible in performance, especially at the employee endpoint!!! 
+        # return f'{self.id}' #Reduces db query but not readable!
 
 
 class Document(models.Model):
@@ -167,6 +175,7 @@ class Document(models.Model):
     file = models.FileField(upload_to='school/documents',
                             validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     date_achieved = models.DateField()
+    year = models.DateField(auto_now_add=True)#I added this b/c semester was using this class. So delete this field!
 
     def __str__(self) -> str:
         return self.file_type
@@ -175,6 +184,56 @@ class Document(models.Model):
         abstract = True
 
 
-class SemesterDocument(Document):
-    semester = models.ForeignKey(
-        Semester, on_delete=models.CASCADE, related_name='documents')
+class Person(models.Model):#Rename it from pserson to user
+    GENDER_CHOICES = (
+        ('M', 'Male'),
+        ('F', 'Female')
+    )
+    RELIGION_CHOICES = (
+        ('C', 'Christian'),
+        ('M', 'Muslim'),
+        ('N', 'None')
+    )
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    birth_date = models.DateField()
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    religion = models.CharField(max_length=1, choices=RELIGION_CHOICES)
+    image = models.ImageField(upload_to='school/images', validators=[validate_file_size])
+    joined_at = models.DateField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return self.user.username
+
+
+class AbstractStatus(models.Model):
+    EMPLOYMENT_STATUS_CHOICES = (
+        ('FT', 'Full time'),
+        ('PT', 'Part time')
+    )
+    MARITAL_STATUS_CHOICES = (
+        ('S', 'Single'),
+        ('M', 'Married')
+    )
+    marital_status = models.CharField(
+        max_length=1, choices=MARITAL_STATUS_CHOICES)
+    employment_status = models.CharField(
+        max_length=2, choices=EMPLOYMENT_STATUS_CHOICES)
+
+    class Meta:
+        abstract = True
+
+
+class Employee(AbstractStatus, Person):
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name='employees')
+    supervisor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='supervisees')
+    office = models.ForeignKey(
+        Office, on_delete=models.PROTECT, related_name='employees')
+    salary = models.DecimalField(max_digits=6, decimal_places=2)
+    term_of_reference = models.FileField(
+        upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
