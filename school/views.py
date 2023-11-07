@@ -172,7 +172,8 @@ class OfficeViewSet(ModelViewSet):
 class EmployeeViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Employee.objects.select_related('user').select_related(
-        'office').select_related('department').select_related('supervisor').all()
+        'office').select_related('department').select_related('supervisor')\
+            .select_related('employeeaddress').all()
     # serializer_class = serializers.EmployeeSerializer
 
     def get_serializer_class(self):
@@ -190,12 +191,13 @@ class EmployeeViewSet(ModelViewSet):
         if user_instance is None:
             return Response({'user': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
 
-        #Use the get_serializer when you're using form at the frontend and 
-        #Delete the EmployeeUpdateSerializer b/c the form will have multpart
-        #which will handle files encoding correctly.
-        employee_instance = self.get_object() 
+        # Use the get_serializer when you're using form at the frontend and
+        # Delete the EmployeeUpdateSerializer b/c the form will have multpart
+        # which will handle files encoding correctly.
+        employee_instance = self.get_object()
         # serializer = self.get_serializer(employee_instance, data=request.data, partial=True)
-        serializer = serializers.EmployeeUpdateSerializer(employee_instance, data=request.data, partial=True)
+        serializer = serializers.EmployeeUpdateSerializer(
+            employee_instance, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -203,18 +205,24 @@ class EmployeeViewSet(ModelViewSet):
     def update_user(self, user_data, user_id):
         try:
             user_instance = User.objects.get(id=user_id)
-            serializer = core_serializers.UserUpdateSerializer(user_instance, data=user_data, partial=True)
+            serializer = core_serializers.UserUpdateSerializer(
+                user_instance, data=user_data, partial=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return user_instance
         except User.DoesNotExist:
             return None
-    
+
     def create(self, request, *args, **kwargs):
         supervisor = self.request.data.get('supervisor', None)
-       
+
         if supervisor == '0':
             self.request.data['supervisor'] = None
 
         return super().create(request, *args, **kwargs)
-        
+
+
+class EmployeeAddressViewSet(ModelViewSet):
+    queryset = models.EmployeeAddress.objects.all()
+    serializer_class = serializers.EmployeeAddressSerializer
+

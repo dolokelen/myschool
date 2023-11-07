@@ -23,6 +23,11 @@ buildings_router = routers.NestedDefaultRouter(
 buildings_router.register(
     'address', views.BuildingAddressViewSet, basename='building-address')
 
+employees_router = routers.NestedDefaultRouter(
+    router, 'employees', lookup='employees')
+employees_router.register('address', views.EmployeeAddressViewSet)
+employees_router = routers.NestedDefaultRouter(
+    router, 'employees', lookup='employees')
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -218,10 +218,18 @@ class AbstractStatus(models.Model):
         ('S', 'Single'),
         ('M', 'Married')
     )
+    HIGHEST_EDUCATION = (
+        ('HSD', 'High Sch Diploma'),
+        ('TRD', 'Trade Sch Certificate'),
+        ('BSC', 'Barchelor Degree'),
+        ('MSC', 'Master Degree'),
+        ('PHD', 'Doctorate Degree')
+    )
     marital_status = models.CharField(
         max_length=1, choices=MARITAL_STATUS_CHOICES)
     employment_status = models.CharField(
         max_length=2, choices=EMPLOYMENT_STATUS_CHOICES)
+    level_of_education = models.CharField(max_length=3, choices=HIGHEST_EDUCATION)
 
     class Meta:
         abstract = True
@@ -235,6 +243,11 @@ class Employee(AbstractStatus, Person):
     office = models.ForeignKey(
         Office, on_delete=models.PROTECT, related_name='employees')
     salary = models.DecimalField(max_digits=6, decimal_places=2)
+    phone = models.CharField(max_length=15)
     term_of_reference = models.FileField(
         upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    #EmployeeContact and EmployeeAddress
+    
+    
+class EmployeeAddress(Address):
+    employee = models.OneToOneField(
+        Employee, on_delete=models.CASCADE, primary_key=True, related_name='employeeaddress')

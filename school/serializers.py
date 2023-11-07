@@ -187,24 +187,33 @@ class OfficeSerializer(serializers.ModelSerializer):
         fields = ['id', 'dimension', 'building']
 
 
+class EmployeeAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EmployeeAddress
+        fields = ['country', 'county', 'city', 'district', 'community']
+
+
 class EmployeeSerializer(serializers.ModelSerializer):
+    employeeaddress = EmployeeAddressSerializer()
     user = UserCreateSerializer()
-    # image = serializers.ImageField()
 
     @transaction.atomic()
     def create(self, validated_data):
         user_data = validated_data.pop('user')
+        address_data = validated_data.pop('employeeaddress')
         user_data.pop('confirm_password')
         user = User.objects.create(**user_data)
         instance = models.Employee.objects.create(
             user_id=user.id, **validated_data)
+        models.EmployeeAddress.objects.create(employee_id=user.id, **address_data)
 
         return instance
 
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'salary', 'term_of_reference', 'image', 'department', 'supervisor', 'office']
+                  'religion', 'salary', 'term_of_reference', 'image', 'department', 
+                  'supervisor', 'office','phone', 'level_of_education', 'employeeaddress']
 
 
 class ReadableSupervisorSerializer(serializers.ModelSerializer):
@@ -219,12 +228,14 @@ class ReadableSupervisorSerializer(serializers.ModelSerializer):
 
 class ReadEmployeeSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
+    employeeaddress = EmployeeAddressSerializer()
     office = ReadOfficeSerializer()
     supervisor = ReadableSupervisorSerializer()
     department = SimpleDepartmentSerializer()
     gender = serializers.SerializerMethodField()
     religion = serializers.SerializerMethodField()
     birth_date = serializers.SerializerMethodField()
+    level_of_education = serializers.SerializerMethodField()
     joined_at = serializers.SerializerMethodField()
     marital_status = serializers.SerializerMethodField()
     employment_status = serializers.SerializerMethodField()
@@ -234,6 +245,9 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     
     def get_religion(self, employee):
         return employee.get_religion_display()
+    
+    def get_level_of_education(self, employee):
+        return employee.get_level_of_education_display()
     
     def get_birth_date(self, employee):
         return employee.birth_date.strftime('%B %d, %Y')
@@ -250,7 +264,8 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'salary', 'term_of_reference', 'image', 'department', 'supervisor', 'office', 'joined_at']
+                  'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone', 
+                  'supervisor', 'office', 'joined_at', 'employeeaddress']
 
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
@@ -259,4 +274,4 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'salary', 'department', 'supervisor', 'office']
+                  'religion', 'level_of_education', 'salary', 'department', 'phone', 'supervisor', 'office']
