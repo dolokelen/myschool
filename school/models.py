@@ -237,3 +237,4 @@ class Employee(AbstractStatus, Person):
     salary = models.DecimalField(max_digits=6, decimal_places=2)
     term_of_reference = models.FileField(
         upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
+    #EmployeeContact and EmployeeAddress

@@ -4,11 +4,12 @@ from rest_framework import serializers
 from .models import User
 
 class UserCreateSerializer(BaseUserCreateSerializer):
+    full_name = serializers.SerializerMethodField()
     confirm_password = serializers.CharField(
         write_only=True, required=True, style={'input_type': 'password'})
     class Meta(BaseUserCreateSerializer.Meta):
         fields = ['id', 'username', 'email', 'first_name',
-                  'last_name', 'password', 'confirm_password', 'is_active']
+                  'last_name', 'full_name', 'password', 'confirm_password', 'is_active']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
@@ -19,6 +20,9 @@ class UserCreateSerializer(BaseUserCreateSerializer):
     def create(self, validated_data):
         validated_data.pop('confirm_password', None)
         return super().create(validated_data)
+    
+    def get_full_name(self, user):
+        return f'{user.first_name} {user.last_name}'
 
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:

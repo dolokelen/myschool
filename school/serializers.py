@@ -71,6 +71,12 @@ class DepartmentSerializer(serializers.ModelSerializer):
                   'number_of_courses', 'created_at', 'departmentaddress', 'departmentcontact']
 
 
+class SimpleDepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Department
+        fields = ['name']
+
+
 class ReadCourseSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField()
     prerequisite = serializers.StringRelatedField()
@@ -183,6 +189,7 @@ class OfficeSerializer(serializers.ModelSerializer):
 
 class EmployeeSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
+    # image = serializers.ImageField()
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -198,6 +205,52 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
                   'religion', 'salary', 'term_of_reference', 'image', 'department', 'supervisor', 'office']
+
+
+class ReadableSupervisorSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    def get_full_name(self, employee):
+        return f'{employee.user.first_name} {employee.user.last_name}'
+    class Meta:
+        model = models.Employee
+        fields = ['full_name']
+
+
+class ReadEmployeeSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+    office = ReadOfficeSerializer()
+    supervisor = ReadableSupervisorSerializer()
+    department = SimpleDepartmentSerializer()
+    gender = serializers.SerializerMethodField()
+    religion = serializers.SerializerMethodField()
+    birth_date = serializers.SerializerMethodField()
+    joined_at = serializers.SerializerMethodField()
+    marital_status = serializers.SerializerMethodField()
+    employment_status = serializers.SerializerMethodField()
+
+    def get_gender(self, employee):
+        return employee.get_gender_display()
+    
+    def get_religion(self, employee):
+        return employee.get_religion_display()
+    
+    def get_birth_date(self, employee):
+        return employee.birth_date.strftime('%B %d, %Y')
+    
+    def get_joined_at(self, employee):
+        return employee.joined_at.strftime('%B %d, %Y')
+    
+    def get_marital_status(self, employee):
+        return employee.get_marital_status_display()
+    
+    def get_employment_status(self, employee):
+        return employee.get_employment_status_display()
+    
+    class Meta:
+        model = models.Employee
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+                  'religion', 'salary', 'term_of_reference', 'image', 'department', 'supervisor', 'office', 'joined_at']
 
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):

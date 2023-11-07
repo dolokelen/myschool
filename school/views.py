@@ -1,11 +1,13 @@
 from django.db import transaction
+from django.contrib.auth.models import Group, Permission
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from core.models import User
-from core.serializers import UserUpdateSerializer
+from core import serializers as core_serializers
 from . import models, serializers, permissions, filters
 
 
@@ -174,6 +176,8 @@ class EmployeeViewSet(ModelViewSet):
     # serializer_class = serializers.EmployeeSerializer
 
     def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadEmployeeSerializer
         if self.request.method == 'PATCH':
             return serializers.EmployeeUpdateSerializer
         return serializers.EmployeeSerializer
@@ -199,11 +203,18 @@ class EmployeeViewSet(ModelViewSet):
     def update_user(self, user_data, user_id):
         try:
             user_instance = User.objects.get(id=user_id)
-            serializer = UserUpdateSerializer(user_instance, data=user_data, partial=True)
+            serializer = core_serializers.UserUpdateSerializer(user_instance, data=user_data, partial=True)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return user_instance
         except User.DoesNotExist:
             return None
-        
+    
+    def create(self, request, *args, **kwargs):
+        supervisor = self.request.data.get('supervisor', None)
+       
+        if supervisor == '0':
+            self.request.data['supervisor'] = None
+
+        return super().create(request, *args, **kwargs)
         
