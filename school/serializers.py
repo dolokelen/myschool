@@ -270,8 +270,10 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
+    employeeaddress = EmployeeAddressSerializer()
+
 
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'level_of_education', 'salary', 'department', 'phone', 'supervisor', 'office']
+                  'religion', 'level_of_education', 'salary', 'department', 'phone', 'supervisor', 'office', 'employeeaddress']

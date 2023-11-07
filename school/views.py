@@ -185,8 +185,11 @@ class EmployeeViewSet(ModelViewSet):
 
     @transaction.atomic()
     def partial_update(self, request, *args, **kwargs):
+        user_id = self.kwargs['pk']
         user_data = self.request.data.pop('user', None)
-        user_instance = self.update_user(user_data, kwargs['pk'])
+        address_data = self.request.data.pop('employeeaddress', None)
+        user_instance = self.update_user(user_data, user_id)
+        self.update_address(address_data, user_id)
 
         if user_instance is None:
             return Response({'user': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
@@ -212,7 +215,14 @@ class EmployeeViewSet(ModelViewSet):
                 return user_instance
         except User.DoesNotExist:
             return None
-
+        
+    def update_address(self, address_data, user_id):
+        address_instance = models.EmployeeAddress.objects.get(employee_id=user_id)
+        serializer = serializers.EmployeeAddressSerializer(address_instance, data=address_data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return address_instance
+        
     def create(self, request, *args, **kwargs):
         supervisor = self.request.data.get('supervisor', None)
 
