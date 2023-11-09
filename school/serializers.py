@@ -237,34 +237,10 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     office = ReadOfficeSerializer()
     supervisor = ReadableSupervisorSerializer()
     department = SimpleDepartmentSerializer()
-    gender = serializers.SerializerMethodField()
-    religion = serializers.SerializerMethodField()
-    birth_date = serializers.SerializerMethodField()
-    level_of_education = serializers.SerializerMethodField()
     joined_at = serializers.SerializerMethodField()
-    marital_status = serializers.SerializerMethodField()
-    employment_status = serializers.SerializerMethodField()
-
-    def get_gender(self, employee):
-        return employee.get_gender_display()
-    
-    def get_religion(self, employee):
-        return employee.get_religion_display()
-    
-    def get_level_of_education(self, employee):
-        return employee.get_level_of_education_display()
-    
-    def get_birth_date(self, employee):
-        return employee.birth_date.strftime('%B %d, %Y')
     
     def get_joined_at(self, employee):
         return employee.joined_at.strftime('%B %d, %Y')
-    
-    def get_marital_status(self, employee):
-        return employee.get_marital_status_display()
-    
-    def get_employment_status(self, employee):
-        return employee.get_employment_status_display()
     
     class Meta:
         model = models.Employee

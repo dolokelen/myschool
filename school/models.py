@@ -185,20 +185,25 @@ class Document(models.Model):
 
 
 class Person(models.Model):#Rename it from pserson to user
+    MALE = 'Male'
+    FEMALE = 'Female'
     GENDER_CHOICES = (
-        ('M', 'Male'),
-        ('F', 'Female')
+        (MALE, MALE),
+        (FEMALE, FEMALE)
     )
+    CHRISTIAN = 'Christian'
+    MUSLIM = 'Muslim'
+    NONE = 'None'
     RELIGION_CHOICES = (
-        ('C', 'Christian'),
-        ('M', 'Muslim'),
-        ('N', 'None')
+        (CHRISTIAN, CHRISTIAN),
+        (MUSLIM, MUSLIM),
+        (NONE, NONE)
     )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     birth_date = models.DateField()
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    religion = models.CharField(max_length=1, choices=RELIGION_CHOICES)
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
+    religion = models.CharField(max_length=9, choices=RELIGION_CHOICES)
     image = models.ImageField(upload_to='school/images', validators=[validate_file_size])
     joined_at = models.DateField(auto_now_add=True)
 
@@ -210,26 +215,35 @@ class Person(models.Model):#Rename it from pserson to user
 
 
 class AbstractStatus(models.Model):
+    FULL_TIME = 'Full Time'
+    PART_TIME = 'Part Time'
     EMPLOYMENT_STATUS_CHOICES = (
-        ('FT', 'Full time'),
-        ('PT', 'Part time')
+        (FULL_TIME, FULL_TIME),
+        (PART_TIME, PART_TIME)
     )
+    SINGLE = 'Single'
+    MARRIED = 'Married'
     MARITAL_STATUS_CHOICES = (
-        ('S', 'Single'),
-        ('M', 'Married')
+        (SINGLE, SINGLE),
+        (MARRIED, MARRIED)
     )
+    HSD = 'High Sch Diploma'
+    TRD = 'Trade Sch Certificate'
+    BSC = 'Bachelor Degree'
+    MSC = 'Master Degree'
+    PHD = 'Doctorate Degree'
     HIGHEST_EDUCATION = (
-        ('HSD', 'High Sch Diploma'),
-        ('TRD', 'Trade Sch Certificate'),
-        ('BSC', 'Bachelor Degree'),
-        ('MSC', 'Master Degree'),
-        ('PHD', 'Doctorate Degree')
+        (HSD, HSD),
+        (TRD, TRD),
+        (BSC, BSC),
+        (MSC, MSC),
+        (PHD, PHD)
     )
     marital_status = models.CharField(
-        max_length=1, choices=MARITAL_STATUS_CHOICES)
+        max_length=7, choices=MARITAL_STATUS_CHOICES)
     employment_status = models.CharField(
-        max_length=2, choices=EMPLOYMENT_STATUS_CHOICES)
-    level_of_education = models.CharField(max_length=3, choices=HIGHEST_EDUCATION)
+        max_length=9, choices=EMPLOYMENT_STATUS_CHOICES)
+    level_of_education = models.CharField(max_length=21, choices=HIGHEST_EDUCATION)
 
     class Meta:
         abstract = True
