@@ -64,14 +64,19 @@ class DepartmentContact(Contact):
 
 
 class Status(models.Model):
+    FR = 'Freshman'
+    SO = 'Sophomore'
+    JR = 'Junior'
+    SR = 'Senior'
+    GR = 'Graduate'
     STATUS_CHOICES = (
-        ("FR", "Freshman"),
-        ("SO", "Sophomore"),
-        ("JR", "Junior"),
-        ("SR", "Senior"),
-        ("GR", "Graduate"),
+        (FR, FR),
+        (SO, SO),
+        (JR, JR),
+        (SR, SR),
+        (GR, GR),
     )
-    level = models.CharField(max_length=2, choices=STATUS_CHOICES)
+    level = models.CharField(max_length=9, choices=STATUS_CHOICES)
 
     class Meta:
         abstract = True

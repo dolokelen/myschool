@@ -77,14 +77,16 @@ class SimpleDepartmentSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-class ReadCourseSerializer(serializers.ModelSerializer):
-    department = serializers.StringRelatedField()
-    prerequisite = serializers.StringRelatedField()
-    level = serializers.SerializerMethodField()
-    total_price = serializers.SerializerMethodField()
+class CoursePrerequisiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Course
+        fields = ['id', 'code']
 
-    def get_level(self, course):
-        return course.get_level_display()
+
+class ReadCourseSerializer(serializers.ModelSerializer):
+    department = SimpleDepartmentSerializer()
+    prerequisite = CoursePrerequisiteSerializer()
+    total_price = serializers.SerializerMethodField()
 
     def get_total_price(self, course):
         return (course.credit * course.price_per_credit) + course.additional_fee
