@@ -74,7 +74,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class SimpleDepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Department
-        fields = ['name']
+        fields = ['id', 'name']
 
 
 class ReadCourseSerializer(serializers.ModelSerializer):
@@ -218,12 +218,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class ReadableSupervisorSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
 
     def get_full_name(self, employee):
         return f'{employee.user.first_name} {employee.user.last_name}'
+    
+    def get_id(self, employee):
+        return employee.user.id
+    
     class Meta:
         model = models.Employee
-        fields = ['full_name']
+        fields = ['id', 'full_name']
 
 
 class ReadEmployeeSerializer(serializers.ModelSerializer):
@@ -266,14 +271,3 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
                   'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone', 
                   'supervisor', 'office', 'joined_at', 'employeeaddress']
-
-
-class EmployeeUpdateSerializer(serializers.ModelSerializer):
-    user = UserCreateSerializer()
-    employeeaddress = EmployeeAddressSerializer()
-
-
-    class Meta:
-        model = models.Employee
-        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'level_of_education', 'salary', 'department', 'phone', 'supervisor', 'office', 'employeeaddress']

@@ -221,7 +221,7 @@ class AbstractStatus(models.Model):
     HIGHEST_EDUCATION = (
         ('HSD', 'High Sch Diploma'),
         ('TRD', 'Trade Sch Certificate'),
-        ('BSC', 'Barchelor Degree'),
+        ('BSC', 'Bachelor Degree'),
         ('MSC', 'Master Degree'),
         ('PHD', 'Doctorate Degree')
     )

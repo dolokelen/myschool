@@ -179,28 +179,40 @@ class EmployeeViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadEmployeeSerializer
-        if self.request.method == 'PATCH':
-            return serializers.EmployeeUpdateSerializer
         return serializers.EmployeeSerializer
 
     @transaction.atomic()
     def partial_update(self, request, *args, **kwargs):
+        mutable_data = self.request.data.copy()
         user_id = self.kwargs['pk']
-        user_data = self.request.data.pop('user', None)
-        address_data = self.request.data.pop('employeeaddress', None)
+
+        user_data = {
+            'username': mutable_data.pop('user.username')[0],
+            'email': mutable_data.pop('user.email')[0],
+            'first_name': mutable_data.pop('user.first_name')[0],
+            'last_name': mutable_data.pop('user.last_name')[0],
+            'is_active': mutable_data.pop('user.is_active')[0],
+        }
+        address_data = {
+            'country': mutable_data.pop('employeeaddress.country')[0],
+            'county': mutable_data.pop('employeeaddress.county')[0],
+            'city': mutable_data.pop('employeeaddress.city')[0],
+            'district': mutable_data.pop('employeeaddress.district')[0],
+            'community': mutable_data.pop('employeeaddress.community')[0],
+        }    
+
         user_instance = self.update_user(user_data, user_id)
         self.update_address(address_data, user_id)
 
         if user_instance is None:
             return Response({'user': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Use the get_serializer when you're using form at the frontend and
-        # Delete the EmployeeUpdateSerializer b/c the form will have multpart
-        # which will handle files encoding correctly.
         employee_instance = self.get_object()
-        # serializer = self.get_serializer(employee_instance, data=request.data, partial=True)
-        serializer = serializers.EmployeeUpdateSerializer(
-            employee_instance, data=request.data, partial=True)
+        if mutable_data['supervisor'][0] == '0':
+            mutable_data['supervisor'] = None
+
+        serializer = self.get_serializer(employee_instance, data=mutable_data, partial=True)
+               
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
