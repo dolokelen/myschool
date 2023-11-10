@@ -1,6 +1,7 @@
 from django.db import models, transaction
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
+from .utility import image_upload_path, tor_upload_path
 from .validators import validate_school_year, validate_file_size
 
 
@@ -209,7 +210,7 @@ class Person(models.Model):#Rename it from pserson to user
     birth_date = models.DateField()
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
     religion = models.CharField(max_length=9, choices=RELIGION_CHOICES)
-    image = models.ImageField(upload_to='school/images', validators=[validate_file_size])
+    image = models.ImageField(upload_to=image_upload_path, validators=[validate_file_size])
     joined_at = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -262,7 +263,7 @@ class Employee(AbstractStatus, Person):
     office = models.ForeignKey(
         Office, on_delete=models.PROTECT, related_name='employees')
     salary = models.DecimalField(max_digits=6, decimal_places=2)
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15)#This belong to Person cls!!!
     term_of_reference = models.FileField(
         upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     
@@ -270,3 +271,22 @@ class Employee(AbstractStatus, Person):
 class EmployeeAddress(Address):
     employee = models.OneToOneField(
         Employee, on_delete=models.CASCADE, primary_key=True, related_name='employeeaddress')
+
+
+class Teacher(AbstractStatus, Person):
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name='teachers')
+    supervisor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='supervisees')
+    salary = models.DecimalField(max_digits=6, decimal_places=2)
+    office = models.ForeignKey(
+        Office, on_delete=models.PROTECT, related_name='teachers')
+    term_of_reference = models.FileField(
+        upload_to=tor_upload_path, validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
+    phone = models.CharField(max_length=15)#This belong to Person cls!!!
+
+
+class TeacherAddress(Address):
+    teacher = models.OneToOneField(
+        Teacher, on_delete=models.CASCADE, primary_key=True, related_name='teacheraddress')
+

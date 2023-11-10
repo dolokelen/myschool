@@ -11,6 +11,7 @@ router.register('buildings', views.BuildingViewSet)
 router.register('offices', views.OfficeViewSet)
 router.register('employees', views.EmployeeViewSet)
 router.register('employee-profile', views.EmployeeProfileViewSet, basename='profile')
+router.register('teachers', views.TeacherViewSet)
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')
@@ -23,11 +24,6 @@ buildings_router = routers.NestedDefaultRouter(
     router, 'buildings', lookup='buildings')
 buildings_router.register(
     'address', views.BuildingAddressViewSet, basename='building-address')
-
-# employees_router = routers.NestedDefaultRouter(
-#     router, 'employees', lookup='employees')
-# employees_router.register('address', views.EmployeeAddressViewSet)
-
 
 urlpatterns = [
     path("", include(router.urls)),

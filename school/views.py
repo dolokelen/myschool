@@ -190,10 +190,7 @@ class EmployeeViewSet(Permission):
             self.request.data['supervisor'] = None
 
         return super().create(request, *args, **kwargs)    
-
-# class EmployeeAddressViewSet(ModelViewSet):
-#     queryset = models.EmployeeAddress.objects.all()
-#     serializer_class = serializers.EmployeeAddressSerializer
+    
 
 class EmployeeProfileViewSet(ModelViewSet):
     http_method_names = ['get']
@@ -203,4 +200,80 @@ class EmployeeProfileViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = models.Employee.objects.filter(user_id=self.kwargs['pk'])
         return queryset
+    
+
+class TeacherViewSet(Permission):
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    queryset = models.Teacher.objects.select_related('user').select_related(
+        'office').select_related('department').select_related('supervisor')\
+            .select_related('teacheraddress').all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadTeacherSerializer
+        return serializers.TeacherSerializer
+
+    @transaction.atomic()
+    def partial_update(self, request, *args, **kwargs):
+        mutable_data = self.request.data.copy()
+        user_id = self.kwargs['pk']
+
+        user_data = {
+            'username': mutable_data.pop('user.username')[0],
+            'email': mutable_data.pop('user.email')[0],
+            'first_name': mutable_data.pop('user.first_name')[0],
+            'last_name': mutable_data.pop('user.last_name')[0],
+            'is_active': mutable_data.pop('user.is_active')[0],
+        }
+        address_data = {
+            'country': mutable_data.pop('teacheraddress.country')[0],
+            'county': mutable_data.pop('teacheraddress.county')[0],
+            'city': mutable_data.pop('teacheraddress.city')[0],
+            'district': mutable_data.pop('teacheraddress.district')[0],
+            'community': mutable_data.pop('teacheraddress.community')[0],
+        }    
+
+        user_instance = self.update_user(user_data, user_id)
+        self.update_address(address_data, user_id)
+
+        if user_instance is None:
+            return Response({'user': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
+
+        teacher_instance = self.get_object()
+        if mutable_data['supervisor'][0] == '0':
+            mutable_data['supervisor'] = None
+
+        serializer = self.get_serializer(teacher_instance, data=mutable_data, partial=True)
+               
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update_user(self, user_data, user_id):
+        try:
+            user_instance = User.objects.get(id=user_id)
+            serializer = core_serializers.UserUpdateSerializer(
+                user_instance, data=user_data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return user_instance
+        except User.DoesNotExist:
+            return None
+        
+    def update_address(self, address_data, user_id):
+        address_instance = models.TeacherAddress.objects.get(teacher_id=user_id)
+        serializer = serializers.TeacherAddressSerializer(address_instance, data=address_data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return address_instance
+        
+    def create(self, request, *args, **kwargs):
+        supervisor = self.request.data.get('supervisor', None)
+
+        if supervisor == '0':
+            self.request.data['supervisor'] = None
+
+        return super().create(request, *args, **kwargs)    
+    
+
 

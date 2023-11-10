@@ -252,3 +252,70 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
                   'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone',
                   'supervisor', 'office', 'joined_at', 'employeeaddress']
+
+
+class TeacherAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TeacherAddress
+        fields = ['country', 'county', 'city', 'district', 'community']
+
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    teacheraddress = TeacherAddressSerializer()
+    user = UserCreateSerializer()
+
+    @transaction.atomic()
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        address_data = validated_data.pop('teacheraddress')
+        user_serializer = UserCreateSerializer(data=user_data)
+
+        if user_serializer.is_valid(raise_exception=True):
+            user = user_serializer.create(user_serializer.validated_data)
+            instance = models.Teacher.objects.create(
+                user_id=user.id, **validated_data)
+
+            models.TeacherAddress.objects.create(
+                teacher_id=user.id, **address_data)
+
+            return instance
+
+    class Meta:
+        model = models.Teacher
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+                  'religion', 'salary', 'term_of_reference', 'image', 'department',
+                  'supervisor', 'office', 'phone', 'level_of_education', 'teacheraddress']
+
+
+class ReadTeacherSupervisorSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+
+    def get_full_name(self, teacher):
+        return f'{teacher.user.first_name} {teacher.user.last_name}'
+
+    def get_id(self, teacher):
+        return teacher.user.id
+
+    class Meta:
+        model = models.Teacher
+        fields = ['id', 'full_name']
+
+
+class ReadTeacherSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+    teacheraddress = TeacherAddressSerializer()
+    office = ReadOfficeSerializer()
+    supervisor = ReadTeacherSupervisorSerializer()
+    department = SimpleDepartmentSerializer()
+    joined_at = serializers.SerializerMethodField()
+
+    def get_joined_at(self, employee):
+        return employee.joined_at.strftime('%B %d, %Y')
+
+    class Meta:
+        model = models.Teacher
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+                  'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone',
+                  'supervisor', 'office', 'joined_at', 'teacheraddress']
