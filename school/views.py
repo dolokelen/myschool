@@ -1,7 +1,5 @@
 from django.db import transaction
-from django.contrib.auth.models import Group, Permission
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,12 +8,7 @@ from core.models import User
 from core import serializers as core_serializers
 from . import models, serializers, permissions, filters
 
-
-class SchoolYearViewSet(ModelViewSet):
-    queryset = models.SchoolYear.objects.order_by('-year')
-    serializer_class = serializers.SchoolYearSerializer
-    # permission_classes = [permissions.FullDjangoModelPermissions]
-
+class Permission(ModelViewSet):
     def get_permissions(self):
         if self.request.method == 'GET':
             return [permissions.ReadModelPermission()]
@@ -27,20 +20,15 @@ class SchoolYearViewSet(ModelViewSet):
             return [permissions.DeleteModelPermission()]
 
 
-class DepartmentViewSet(ModelViewSet):
+class SchoolYearViewSet(Permission):
+    queryset = models.SchoolYear.objects.all()
+    serializer_class = serializers.SchoolYearSerializer
+
+
+class DepartmentViewSet(Permission):
     queryset = models.Department.objects.prefetch_related('courses')\
         .select_related('departmentaddress').prefetch_related('departmentcontact').all()
     serializer_class = serializers.DepartmentSerializer
-
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [permissions.ReadModelPermission()]
-        if self.request.method == 'POST':
-            return [permissions.CreateModelPermission()]
-        if self.request.method in ['PUT', 'PATCH']:
-            return [permissions.UpdateModelPermission()]
-        if self.request.method == 'DELETE':
-            return [permissions.DeleteModelPermission()]
 
 
 class DepartmentAddressViewSet(ModelViewSet):
@@ -67,7 +55,7 @@ class DepartmentContactViewSet(ModelViewSet):
         return {'department_id': self.kwargs['departments_pk']}
 
 
-class CourseViewSet(ModelViewSet):
+class CourseViewSet(Permission):
     queryset = models.Course.objects.select_related(
         'prerequisite').select_related('department').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -80,18 +68,8 @@ class CourseViewSet(ModelViewSet):
             return serializers.ReadCourseSerializer
         return serializers.CourseSerializer
 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [permissions.ReadModelPermission()]
-        if self.request.method == 'POST':
-            return [permissions.CreateModelPermission()]
-        if self.request.method in ['PUT', 'PATCH']:
-            return [permissions.UpdateModelPermission()]
-        if self.request.method == 'DELETE':
-            return [permissions.DeleteModelPermission()]
 
-
-class SemesterViewSet(ModelViewSet):
+class SemesterViewSet(Permission):
     queryset = models.Semester.objects.select_related('school_year').\
         prefetch_related('courses').all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -111,30 +89,10 @@ class SemesterViewSet(ModelViewSet):
             return serializers.ReadSemesterSerializer
         return serializers.SemesterSerializer
 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [permissions.ReadModelPermission()]
-        if self.request.method == 'POST':
-            return [permissions.CreateModelPermission()]
-        if self.request.method in ['PUT', 'PATCH']:
-            return [permissions.UpdateModelPermission()]
-        if self.request.method == 'DELETE':
-            return [permissions.DeleteModelPermission()]
 
-
-class BuildingViewSet(ModelViewSet):
+class BuildingViewSet(Permission):
     queryset = models.Building.objects.select_related('buildingaddress').all()
     serializer_class = serializers.BuildingSerializer
-
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [permissions.ReadModelPermission()]
-        if self.request.method == 'POST':
-            return [permissions.CreateModelPermission()]
-        if self.request.method in ['PUT', 'PATCH']:
-            return [permissions.UpdateModelPermission()]
-        if self.request.method == 'DELETE':
-            return [permissions.DeleteModelPermission()]
 
 
 class BuildingAddressViewSet(ModelViewSet):
@@ -150,7 +108,7 @@ class BuildingAddressViewSet(ModelViewSet):
         return {'building_id': self.kwargs['buildings_pk']}
 
 
-class OfficeViewSet(ModelViewSet):
+class OfficeViewSet(Permission):
     queryset = models.Office.objects.select_related('building').all()
 
     def get_serializer_class(self):
@@ -158,23 +116,12 @@ class OfficeViewSet(ModelViewSet):
             return serializers.ReadOfficeSerializer
         return serializers.OfficeSerializer
 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [permissions.ReadModelPermission()]
-        if self.request.method == 'POST':
-            return [permissions.CreateModelPermission()]
-        if self.request.method in ['PUT', 'PATCH']:
-            return [permissions.UpdateModelPermission()]
-        if self.request.method == 'DELETE':
-            return [permissions.DeleteModelPermission()]
 
-
-class EmployeeViewSet(ModelViewSet):
+class EmployeeViewSet(Permission):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Employee.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\
             .select_related('employeeaddress').all()
-    # serializer_class = serializers.EmployeeSerializer
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -243,7 +190,7 @@ class EmployeeViewSet(ModelViewSet):
 
         return super().create(request, *args, **kwargs)
 
-
+    
 class EmployeeAddressViewSet(ModelViewSet):
     queryset = models.EmployeeAddress.objects.all()
     serializer_class = serializers.EmployeeAddressSerializer
