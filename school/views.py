@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import IsAuthenticated
 from core.models import User
 from core import serializers as core_serializers
 from . import models, serializers, permissions, filters
@@ -188,10 +189,18 @@ class EmployeeViewSet(Permission):
         if supervisor == '0':
             self.request.data['supervisor'] = None
 
-        return super().create(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs)    
 
-    
-class EmployeeAddressViewSet(ModelViewSet):
-    queryset = models.EmployeeAddress.objects.all()
-    serializer_class = serializers.EmployeeAddressSerializer
+# class EmployeeAddressViewSet(ModelViewSet):
+#     queryset = models.EmployeeAddress.objects.all()
+#     serializer_class = serializers.EmployeeAddressSerializer
+
+class EmployeeProfileViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadEmployeeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = models.Employee.objects.filter(user_id=self.kwargs['pk'])
+        return queryset
 

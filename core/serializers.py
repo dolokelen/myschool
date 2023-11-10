@@ -19,7 +19,12 @@ class UserCreateSerializer(BaseUserCreateSerializer):
 
     def create(self, validated_data):
         validated_data.pop('confirm_password', None)
-        return super().create(validated_data)
+        password = validated_data.pop('password', None)
+        user = super().create(validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
     
     def get_full_name(self, user):
         return f'{user.first_name} {user.last_name}'

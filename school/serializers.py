@@ -203,19 +203,22 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         address_data = validated_data.pop('employeeaddress')
-        user_data.pop('confirm_password')
-        user = User.objects.create(**user_data)
-        instance = models.Employee.objects.create(
-            user_id=user.id, **validated_data)
-        models.EmployeeAddress.objects.create(employee_id=user.id, **address_data)
+        user_serializer = UserCreateSerializer(data=user_data)
 
-        return instance
+        if user_serializer.is_valid(raise_exception=True):
+            user = user_serializer.create(user_serializer.validated_data)
+            instance = models.Employee.objects.create(
+                user_id=user.id, **validated_data)
+            models.EmployeeAddress.objects.create(
+                employee_id=user.id, **address_data)
+
+            return instance
 
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'salary', 'term_of_reference', 'image', 'department', 
-                  'supervisor', 'office','phone', 'level_of_education', 'employeeaddress']
+                  'religion', 'salary', 'term_of_reference', 'image', 'department',
+                  'supervisor', 'office', 'phone', 'level_of_education', 'employeeaddress']
 
 
 class ReadableSupervisorSerializer(serializers.ModelSerializer):
@@ -224,10 +227,10 @@ class ReadableSupervisorSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, employee):
         return f'{employee.user.first_name} {employee.user.last_name}'
-    
+
     def get_id(self, employee):
         return employee.user.id
-    
+
     class Meta:
         model = models.Employee
         fields = ['id', 'full_name']
@@ -240,12 +243,12 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     supervisor = ReadableSupervisorSerializer()
     department = SimpleDepartmentSerializer()
     joined_at = serializers.SerializerMethodField()
-    
+
     def get_joined_at(self, employee):
         return employee.joined_at.strftime('%B %d, %Y')
-    
+
     class Meta:
         model = models.Employee
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
-                  'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone', 
+                  'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone',
                   'supervisor', 'office', 'joined_at', 'employeeaddress']
