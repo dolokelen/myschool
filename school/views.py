@@ -9,6 +9,7 @@ from core.models import User
 from core import serializers as core_serializers
 from . import models, serializers, permissions, filters
 
+
 class Permission(ModelViewSet):
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -28,7 +29,8 @@ class SchoolYearViewSet(Permission):
 
 class DepartmentViewSet(Permission):
     queryset = models.Department.objects.prefetch_related('courses')\
-        .select_related('departmentaddress').prefetch_related('departmentcontact').all()
+        .select_related('departmentaddress').\
+        prefetch_related('departmentcontact').prefetch_related('majors').all()
     serializer_class = serializers.DepartmentSerializer
 
 
@@ -124,7 +126,7 @@ class EmployeeViewSet(Permission):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Employee.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\
-            .select_related('employeeaddress').all()
+        .select_related('employeeaddress').all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -149,7 +151,7 @@ class EmployeeViewSet(Permission):
             'city': mutable_data.pop('employeeaddress.city')[0],
             'district': mutable_data.pop('employeeaddress.district')[0],
             'community': mutable_data.pop('employeeaddress.community')[0],
-        }    
+        }
 
         user_instance = self.update_user(user_data, user_id)
         self.update_address(address_data, user_id)
@@ -161,8 +163,9 @@ class EmployeeViewSet(Permission):
         if mutable_data['supervisor'][0] == '0':
             mutable_data['supervisor'] = None
 
-        serializer = self.get_serializer(employee_instance, data=mutable_data, partial=True)
-               
+        serializer = self.get_serializer(
+            employee_instance, data=mutable_data, partial=True)
+
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -177,22 +180,24 @@ class EmployeeViewSet(Permission):
                 return user_instance
         except User.DoesNotExist:
             return None
-        
+
     def update_address(self, address_data, user_id):
-        address_instance = models.EmployeeAddress.objects.get(employee_id=user_id)
-        serializer = serializers.EmployeeAddressSerializer(address_instance, data=address_data)
+        address_instance = models.EmployeeAddress.objects.get(
+            employee_id=user_id)
+        serializer = serializers.EmployeeAddressSerializer(
+            address_instance, data=address_data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return address_instance
-        
+
     def create(self, request, *args, **kwargs):
         supervisor = self.request.data.get('supervisor', None)
 
         if supervisor == '0':
             self.request.data['supervisor'] = None
 
-        return super().create(request, *args, **kwargs)    
-    
+        return super().create(request, *args, **kwargs)
+
 
 class EmployeeProfileViewSet(ModelViewSet):
     http_method_names = ['get']
@@ -202,7 +207,7 @@ class EmployeeProfileViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = models.Employee.objects.filter(user_id=self.kwargs['pk'])
         return queryset
-    
+
 
 class TeacherViewSet(Permission):
     filter_backends = [DjangoFilterBackend]
@@ -210,8 +215,8 @@ class TeacherViewSet(Permission):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Teacher.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\
-            .select_related('teacheraddress').all()
-    
+        .select_related('teacheraddress').all()
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadTeacherSerializer
@@ -235,7 +240,7 @@ class TeacherViewSet(Permission):
             'city': mutable_data.pop('teacheraddress.city')[0],
             'district': mutable_data.pop('teacheraddress.district')[0],
             'community': mutable_data.pop('teacheraddress.community')[0],
-        }    
+        }
         user_instance = self.update_user(user_data, user_id)
         self.update_address(address_data, user_id)
 
@@ -246,8 +251,9 @@ class TeacherViewSet(Permission):
         if mutable_data['supervisor'][0] == '0':
             mutable_data['supervisor'] = None
 
-        serializer = self.get_serializer(teacher_instance, data=mutable_data, partial=True)
-               
+        serializer = self.get_serializer(
+            teacher_instance, data=mutable_data, partial=True)
+
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -262,22 +268,24 @@ class TeacherViewSet(Permission):
                 return user_instance
         except User.DoesNotExist:
             return None
-        
+
     def update_address(self, address_data, user_id):
-        address_instance = models.TeacherAddress.objects.get(teacher_id=user_id)
-        serializer = serializers.TeacherAddressSerializer(address_instance, data=address_data)
+        address_instance = models.TeacherAddress.objects.get(
+            teacher_id=user_id)
+        serializer = serializers.TeacherAddressSerializer(
+            address_instance, data=address_data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return address_instance
-        
+
     def create(self, request, *args, **kwargs):
         supervisor = self.request.data.get('supervisor', None)
 
         if supervisor == '0':
             self.request.data['supervisor'] = None
 
-        return super().create(request, *args, **kwargs)    
-    
+        return super().create(request, *args, **kwargs)
+
 
 class TeacherProfileViewSet(ModelViewSet):
     http_method_names = ['get']
@@ -293,7 +301,7 @@ class MajorViewSet(Permission):
     filter_backends = [DjangoFilterBackend]
     filterset_class = filters.MajorFilter
     queryset = models.Major.objects.select_related('department').all()
-    
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadMajorSerializer
