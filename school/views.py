@@ -288,3 +288,11 @@ class TeacherProfileViewSet(ModelViewSet):
         queryset = models.Teacher.objects.filter(user_id=self.kwargs['pk'])
         return queryset
 
+
+class MajorViewSet(ModelViewSet):
+    queryset = models.Major.objects.select_related('department').all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadMajorSerializer
+        return serializers.MajorSerializer

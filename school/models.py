@@ -290,3 +290,23 @@ class TeacherAddress(Address):
     teacher = models.OneToOneField(
         Teacher, on_delete=models.CASCADE, primary_key=True, related_name='teacheraddress')
 
+
+class Major(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name='majors')
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Student(Status, Person):
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name='students')
+    supervisor = models.ForeignKey(
+        Teacher, on_delete=models.PROTECT, related_name='mentees')
+    major = models.ForeignKey(
+        Major, on_delete=models.PROTECT, related_name='students')
+    registration_fee = models.DecimalField(max_digits=6, decimal_places=2)
+    phone = models.CharField(max_length=15)#This belong to Person cls!!!
+

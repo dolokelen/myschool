@@ -319,3 +319,18 @@ class ReadTeacherSerializer(serializers.ModelSerializer):
         fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
                   'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone',
                   'supervisor', 'office', 'joined_at', 'teacheraddress']
+
+
+
+class MajorSerializer(serializers.ModelSerializer):    
+    class Meta:
+        model = models.Major
+        fields = ['id', 'name', 'department']
+
+
+class ReadMajorSerializer(serializers.ModelSerializer):
+    department = SimpleDepartmentSerializer(read_only=True)
+
+    class Meta:
+        model = models.Major
+        fields = ['id', 'name', 'department']
