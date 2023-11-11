@@ -232,7 +232,6 @@ class TeacherViewSet(Permission):
             'district': mutable_data.pop('teacheraddress.district')[0],
             'community': mutable_data.pop('teacheraddress.community')[0],
         }    
-
         user_instance = self.update_user(user_data, user_id)
         self.update_address(address_data, user_id)
 
@@ -276,4 +275,12 @@ class TeacherViewSet(Permission):
         return super().create(request, *args, **kwargs)    
     
 
+class TeacherProfileViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadTeacherSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = models.Teacher.objects.filter(user_id=self.kwargs['pk'])
+        return queryset
 

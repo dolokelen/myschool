@@ -12,6 +12,7 @@ router.register('offices', views.OfficeViewSet)
 router.register('employees', views.EmployeeViewSet)
 router.register('employee-profile', views.EmployeeProfileViewSet, basename='profile')
 router.register('teachers', views.TeacherViewSet)
+router.register('teacher-profile', views.TeacherProfileViewSet, basename='profile')
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')
