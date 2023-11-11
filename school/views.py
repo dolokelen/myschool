@@ -119,6 +119,8 @@ class OfficeViewSet(Permission):
 
 
 class EmployeeViewSet(Permission):
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = filters.EmployeeFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Employee.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\
@@ -203,6 +205,8 @@ class EmployeeProfileViewSet(ModelViewSet):
     
 
 class TeacherViewSet(Permission):
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = filters.TeacherFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Teacher.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\

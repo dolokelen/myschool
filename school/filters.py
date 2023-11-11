@@ -8,3 +8,19 @@ class CourseFilter(FilterSet):
             'department_id': ['exact'],
             'prerequisite': ['exact']
         }
+
+
+class EmployeeFilter(FilterSet):
+    class Meta:
+        model = models.Employee
+        fields = {
+            'department_id': ['exact'],
+        }
+
+
+class TeacherFilter(FilterSet):
+    class Meta:
+        model = models.Teacher
+        fields = {
+            'department_id': ['exact'],
+        }
