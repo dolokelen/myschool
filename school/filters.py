@@ -18,6 +18,14 @@ class EmployeeFilter(FilterSet):
         }
 
 
+class MajorFilter(FilterSet):
+    class Meta:
+        model = models.Major
+        fields = {
+            'department_id': ['exact'],
+        }
+
+
 class TeacherFilter(FilterSet):
     class Meta:
         model = models.Teacher

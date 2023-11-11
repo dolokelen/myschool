@@ -289,7 +289,9 @@ class TeacherProfileViewSet(ModelViewSet):
         return queryset
 
 
-class MajorViewSet(ModelViewSet):
+class MajorViewSet(Permission):
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = filters.MajorFilter
     queryset = models.Major.objects.select_related('department').all()
     
     def get_serializer_class(self):
