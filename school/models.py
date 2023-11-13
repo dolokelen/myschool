@@ -1,7 +1,8 @@
 from django.db import models, transaction
+from django.db.models import F, Max
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
-from .utility import image_upload_path, tor_upload_path
+from .utility import image_upload_path, student_number_generator, tor_upload_path
 from .validators import validate_school_year, validate_file_size
 
 
@@ -160,7 +161,8 @@ class Office(models.Model):
     dimension = models.CharField(max_length=100)
 
     def __str__(self) -> str:
-        return f'{self.building} - {self.id}'#This is very terrible in performance, especially at the employee endpoint!!! 
+        # This is very terrible in performance, especially at the employee endpoint!!!
+        return f'{self.building} - {self.id}'
         # return f'{self.id}' #Reduces db query but not readable!
 
 
@@ -181,7 +183,8 @@ class Document(models.Model):
     file = models.FileField(upload_to='school/documents',
                             validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     date_achieved = models.DateField()
-    year = models.DateField(auto_now_add=True)#I added this b/c semester was using this class. So delete this field!
+    # I added this b/c semester was using this class. So delete this field!
+    year = models.DateField(auto_now_add=True)
 
     def __str__(self) -> str:
         return self.file_type
@@ -190,7 +193,7 @@ class Document(models.Model):
         abstract = True
 
 
-class Person(models.Model):#Rename it from pserson to user
+class Person(models.Model):  # Rename it from pserson to user
     MALE = 'Male'
     FEMALE = 'Female'
     GENDER_CHOICES = (
@@ -210,7 +213,8 @@ class Person(models.Model):#Rename it from pserson to user
     birth_date = models.DateField()
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
     religion = models.CharField(max_length=9, choices=RELIGION_CHOICES)
-    image = models.ImageField(upload_to=image_upload_path, validators=[validate_file_size])
+    image = models.ImageField(
+        upload_to=image_upload_path, validators=[validate_file_size])
     joined_at = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -249,7 +253,8 @@ class AbstractStatus(models.Model):
         max_length=7, choices=MARITAL_STATUS_CHOICES)
     employment_status = models.CharField(
         max_length=9, choices=EMPLOYMENT_STATUS_CHOICES)
-    level_of_education = models.CharField(max_length=21, choices=HIGHEST_EDUCATION)
+    level_of_education = models.CharField(
+        max_length=21, choices=HIGHEST_EDUCATION)
 
     class Meta:
         abstract = True
@@ -263,11 +268,11 @@ class Employee(AbstractStatus, Person):
     office = models.ForeignKey(
         Office, on_delete=models.PROTECT, related_name='employees')
     salary = models.DecimalField(max_digits=6, decimal_places=2)
-    phone = models.CharField(max_length=15)#This belong to Person cls!!!
+    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
     term_of_reference = models.FileField(
         upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    
-    
+
+
 class EmployeeAddress(Address):
     employee = models.OneToOneField(
         Employee, on_delete=models.CASCADE, primary_key=True, related_name='employeeaddress')
@@ -283,7 +288,7 @@ class Teacher(AbstractStatus, Person):
         Office, on_delete=models.PROTECT, related_name='teachers')
     term_of_reference = models.FileField(
         upload_to=tor_upload_path, validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    phone = models.CharField(max_length=15)#This belong to Person cls!!!
+    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
 
 
 class TeacherAddress(Address):
@@ -300,6 +305,7 @@ class Major(models.Model):
         return self.name
 
 
+
 class Student(Status, Person):
     department = models.ForeignKey(
         Department, on_delete=models.PROTECT, related_name='students')
@@ -307,6 +313,11 @@ class Student(Status, Person):
         Teacher, on_delete=models.PROTECT, related_name='mentees')
     major = models.ForeignKey(
         Major, on_delete=models.PROTECT, related_name='students')
-    registration_fee = models.DecimalField(max_digits=6, decimal_places=2)
-    phone = models.CharField(max_length=15)#This belong to Person cls!!!
-
+    student_number = models.CharField(max_length=255, default=student_number_generator)#Try to make it unique although the func is generating unique values.
+    registration_fee = models.DecimalField(max_digits=6, decimal_places=2)#Belongs to enrollment
+    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
+    is_transfer = models.BooleanField(default=False)
+    #is_scholarship = models.BooleanField(default=False) Belongs to enrollment
+class StudentAddress(Address):
+    student = models.OneToOneField(
+        Student, on_delete=models.CASCADE, primary_key=True, related_name='studentaddress')

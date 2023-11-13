@@ -306,3 +306,83 @@ class MajorViewSet(Permission):
         if self.request.method == 'GET':
             return serializers.ReadMajorSerializer
         return serializers.MajorSerializer
+
+
+class StudentViewSet(Permission):
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_class = filters.StudentFilter
+    search_fields = ['phone', 'level', 'religion', 'gender', 'student_number']
+
+    queryset = models.Student.objects.select_related('user').select_related(
+        'supervisor').select_related('major').select_related('department').\
+            select_related('studentaddress').all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadStudentSerializer
+        return serializers.StudentSerializer
+    
+    @transaction.atomic()
+    def partial_update(self, request, *args, **kwargs):
+        mutable_data = self.request.data.copy()
+        user_id = self.kwargs['pk']
+        print('*******************', request.data)
+
+        user_data = {
+            'username': mutable_data.pop('user.username')[0],
+            'email': mutable_data.pop('user.email')[0],
+            'first_name': mutable_data.pop('user.first_name')[0],
+            'last_name': mutable_data.pop('user.last_name')[0],
+            'is_active': mutable_data.pop('user.is_active')[0],
+        }
+        address_data = {
+            'country': mutable_data.pop('studentaddress.country')[0],
+            'county': mutable_data.pop('studentaddress.county')[0],
+            'city': mutable_data.pop('studentaddress.city')[0],
+            'district': mutable_data.pop('studentaddress.district')[0],
+            'community': mutable_data.pop('studentaddress.community')[0],
+        }
+        user_instance = self.update_user(user_data, user_id)
+        self.update_address(address_data, user_id)
+
+        if user_instance is None:
+            return Response({'user': 'Bad request'}, status=status.HTTP_400_BAD_REQUEST)
+
+        student_instance = self.get_object()
+        serializer = self.get_serializer(
+            student_instance, data=mutable_data, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update_user(self, user_data, user_id):
+        try:
+            user_instance = User.objects.get(id=user_id)
+            serializer = core_serializers.UserUpdateSerializer(
+                user_instance, data=user_data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return user_instance
+        except User.DoesNotExist:
+            return None
+
+    def update_address(self, address_data, user_id):
+        address_instance = models.StudentAddress.objects.get(
+            student_id=user_id)
+        serializer = serializers.StudentAddressSerializer(
+            address_instance, data=address_data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return address_instance
+
+
+
+class StudentProfileViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadStudentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = models.Student.objects.filter(user_id=self.kwargs['pk'])
+        return queryset

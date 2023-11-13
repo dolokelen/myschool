@@ -32,3 +32,11 @@ class TeacherFilter(FilterSet):
         fields = {
             'department_id': ['exact'],
         }
+
+class StudentFilter(FilterSet):
+    class Meta:
+        model = models.Student
+        fields = {
+            'department_id': ['exact'],
+            'major_id': ['exact'],
+        }

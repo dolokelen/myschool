@@ -260,7 +260,6 @@ class TeacherAddressSerializer(serializers.ModelSerializer):
         fields = ['country', 'county', 'city', 'district', 'community']
 
 
-
 class TeacherSerializer(serializers.ModelSerializer):
     teacheraddress = TeacherAddressSerializer()
     user = UserCreateSerializer()
@@ -321,8 +320,22 @@ class ReadTeacherSerializer(serializers.ModelSerializer):
                   'supervisor', 'office', 'joined_at', 'teacheraddress']
 
 
+class SimpleTeacherSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
 
-class MajorSerializer(serializers.ModelSerializer):    
+    def get_id(self, obj):
+        return obj.user.id
+
+    def get_full_name(self, obj):
+        return f'{obj.user.first_name} {obj.user.last_name}'
+
+    class Meta:
+        model = models.Teacher
+        fields = ['id', 'full_name']
+
+
+class MajorSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Major
         fields = ['id', 'name', 'department']
@@ -334,3 +347,54 @@ class ReadMajorSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Major
         fields = ['id', 'name', 'department']
+
+
+class SimpleMajorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Major
+        fields = ['id', 'name']
+
+
+class StudentAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.StudentAddress
+        fields = ['country', 'county', 'city', 'district', 'community']
+
+
+class ReadStudentSerializer(serializers.ModelSerializer):
+    supervisor = SimpleTeacherSerializer()
+    user = UserCreateSerializer()
+    major = SimpleMajorSerializer()
+    department = SimpleDepartmentSerializer()
+    studentaddress = StudentAddressSerializer()
+
+    class Meta:
+        model = models.Student
+        fields = ['user', 'birth_date', 'gender', 'religion', 'image', 'joined_at', 'student_number', 'is_transfer',
+                  'level', 'department', 'supervisor', 'major', 'phone', 'registration_fee', 'studentaddress']
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer()
+    studentaddress = StudentAddressSerializer()
+
+    @transaction.atomic()
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        address_data = validated_data.pop('studentaddress')
+        user_serializer = UserCreateSerializer(data=user_data)
+
+        if user_serializer.is_valid(raise_exception=True):
+            user = user_serializer.create(user_serializer.validated_data)
+            instance = models.Student.objects.create(
+                user_id=user.id, **validated_data)
+
+            models.StudentAddress.objects.create(
+                student_id=user.id, **address_data)
+
+            return instance
+
+    class Meta:
+        model = models.Student
+        fields = ['user', 'birth_date', 'gender', 'religion', 'image', 'joined_at', 'is_transfer',
+                  'level', 'department', 'supervisor', 'major', 'phone', 'registration_fee', 'studentaddress']
