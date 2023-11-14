@@ -321,3 +321,23 @@ class Student(Status, Person):
 class StudentAddress(Address):
     student = models.OneToOneField(
         Student, on_delete=models.CASCADE, primary_key=True, related_name='studentaddress')
+
+
+class ClassRoom(models.Model):
+    building = models.ForeignKey(
+        Building, on_delete=models.PROTECT, related_name='classrooms')
+    name = models.CharField(max_length=150, unique=True)
+    dimension = models.CharField(max_length=150)
+    created_at = models.DateField(auto_now_add=True)
+    updated_at = models.DateField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f'{self.building}-{self.name}'
+
+
+class ClassTime(models.Model):
+    start_time = models.CharField(max_length=7)
+    end_time = models.CharField(max_length=7)
+    week_days = models.CharField(max_length=6)
+    class Meta:
+        unique_together = [['start_time', 'end_time','week_days']]

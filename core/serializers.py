@@ -64,3 +64,9 @@ class AddGroupsToUserSerializer(serializers.ModelSerializer):
 
 class GroupRemoveUserSerializer(serializers.Serializer):
     user_ids = serializers.ListField(child=serializers.IntegerField())
+
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name']

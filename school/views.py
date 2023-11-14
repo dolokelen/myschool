@@ -94,7 +94,8 @@ class SemesterViewSet(Permission):
 
 
 class BuildingViewSet(Permission):
-    queryset = models.Building.objects.select_related('buildingaddress').all()
+    queryset = models.Building.objects.select_related(
+        'buildingaddress').prefetch_related('classrooms').all()
     serializer_class = serializers.BuildingSerializer
 
 
@@ -215,7 +216,7 @@ class TeacherViewSet(Permission):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = models.Teacher.objects.select_related('user').select_related(
         'office').select_related('department').select_related('supervisor')\
-        .select_related('teacheraddress').all()
+        .select_related('teacheraddress').prefetch_related('mentees').all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -315,18 +316,17 @@ class StudentViewSet(Permission):
 
     queryset = models.Student.objects.select_related('user').select_related(
         'supervisor').select_related('major').select_related('department').\
-            select_related('studentaddress').all()
+        select_related('studentaddress').all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadStudentSerializer
         return serializers.StudentSerializer
-    
+
     @transaction.atomic()
     def partial_update(self, request, *args, **kwargs):
         mutable_data = self.request.data.copy()
         user_id = self.kwargs['pk']
-        print('*******************', request.data)
 
         user_data = {
             'username': mutable_data.pop('user.username')[0],
@@ -377,7 +377,6 @@ class StudentViewSet(Permission):
             return address_instance
 
 
-
 class StudentProfileViewSet(ModelViewSet):
     http_method_names = ['get']
     serializer_class = serializers.ReadStudentSerializer
@@ -386,3 +385,17 @@ class StudentProfileViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = models.Student.objects.filter(user_id=self.kwargs['pk'])
         return queryset
+
+
+class ClassRoomViewSet(Permission):
+    queryset = models.ClassRoom.objects.select_related('building').all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadClassRoomSerializer
+        return serializers.ClassRoomSerializer
+    
+
+class ClassTimeViewSet(Permission):
+    queryset = models.ClassTime.objects.all()
+    serializer_class = serializers.ClassTimeSerializer

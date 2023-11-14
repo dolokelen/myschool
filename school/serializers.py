@@ -1,7 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
-from core.serializers import UserCreateSerializer
-from core.models import User
+from core.serializers import UserCreateSerializer, SimpleUserSerializer
 from . import models
 
 
@@ -151,8 +150,15 @@ class BuildingAddressSerializer(serializers.ModelSerializer):
         fields = ['country', 'county', 'city', 'district', 'community']
 
 
+class SimpleClassRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassRoom
+        fields = ['id', 'name', 'dimension']
+
+
 class BuildingSerializer(serializers.ModelSerializer):
     buildingaddress = BuildingAddressSerializer()
+    classrooms = SimpleClassRoomSerializer(many=True, read_only=True)
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -165,7 +171,7 @@ class BuildingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Building
-        fields = ['id', 'name', 'dimension', 'office_counts',
+        fields = ['id', 'name', 'dimension', 'office_counts', 'classrooms',
                   'classroom_counts', 'toilet_counts', 'date_constructed', 'buildingaddress']
 
 
@@ -302,8 +308,17 @@ class ReadTeacherSupervisorSerializer(serializers.ModelSerializer):
         fields = ['id', 'full_name']
 
 
+class SimpleStudentSerializer(serializers.ModelSerializer):
+    user = SimpleUserSerializer(read_only=True)
+
+    class Meta:
+        model = models.Student
+        fields = ['user', 'level', 'phone']
+
+
 class ReadTeacherSerializer(serializers.ModelSerializer):
     user = UserCreateSerializer()
+    mentees = SimpleStudentSerializer(many=True)
     teacheraddress = TeacherAddressSerializer()
     office = ReadOfficeSerializer()
     supervisor = ReadTeacherSupervisorSerializer()
@@ -315,7 +330,7 @@ class ReadTeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Teacher
-        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date',
+        fields = ['user', 'gender', 'marital_status', 'employment_status', 'birth_date', 'mentees',
                   'religion', 'level_of_education', 'salary', 'term_of_reference', 'image', 'department', 'phone',
                   'supervisor', 'office', 'joined_at', 'teacheraddress']
 
@@ -398,3 +413,31 @@ class StudentSerializer(serializers.ModelSerializer):
         model = models.Student
         fields = ['user', 'birth_date', 'gender', 'religion', 'image', 'joined_at', 'is_transfer',
                   'level', 'department', 'supervisor', 'major', 'phone', 'registration_fee', 'studentaddress']
+
+
+class TeacherMenteeSerializer(serializers.ModelField):
+    mentees = ReadStudentSerializer(many=True)
+
+    class Meta:
+        model = models.Teacher
+        fields = ['mentees']
+
+
+class ClassRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassRoom
+        fields = ['id', 'name', 'dimension', 'building']
+
+
+class ReadClassRoomSerializer(serializers.ModelSerializer):
+    building = SimpleBuildingSerializer()
+
+    class Meta:
+        model = models.ClassRoom
+        fields = ['id', 'name', 'dimension', 'created_at', 'building']
+
+
+class ClassTimeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassTime
+        fields = ['id', 'start_time', 'end_time', 'week_days']
