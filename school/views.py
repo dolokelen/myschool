@@ -60,7 +60,7 @@ class DepartmentContactViewSet(ModelViewSet):
 
 class CourseViewSet(Permission):
     queryset = models.Course.objects.select_related(
-        'prerequisite').select_related('department').all()
+        'prerequisite').select_related('department').prefetch_related('sections').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = filters.CourseFilter
     search_fields = ['code', 'title']

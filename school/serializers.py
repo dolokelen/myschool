@@ -81,18 +81,25 @@ class CoursePrerequisiteSerializer(serializers.ModelSerializer):
         model = models.Course
         fields = ['id', 'code']
 
+class SimpleSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Section
+        fields = ['id', 'name']
+
 
 class ReadCourseSerializer(serializers.ModelSerializer):
     department = SimpleDepartmentSerializer()
     prerequisite = CoursePrerequisiteSerializer()
     total_price = serializers.SerializerMethodField()
+    sections = SimpleSectionSerializer(many=True)
+
 
     def get_total_price(self, course):
         return (course.credit * course.price_per_credit) + course.additional_fee
 
     class Meta:
         model = models.Course
-        fields = ['id', 'code', 'title', 'department', 'level', 'prerequisite',
+        fields = ['id', 'code', 'title', 'department', 'level', 'prerequisite', 'sections',
                   'price_per_credit', 'credit', 'additional_fee', 'total_price']
 
 
