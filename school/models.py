@@ -156,13 +156,14 @@ class BuildingAddress(Address):
 
 
 class Office(models.Model):
+    #Give office a name filed!!!!
     building = models.ForeignKey(
         Building, on_delete=models.PROTECT, related_name='offices')
     dimension = models.CharField(max_length=100)
 
-    def __str__(self) -> str:
+    # def __str__(self) -> str:
         # This is very terrible in performance, especially at the employee endpoint!!!
-        return f'{self.building} - {self.id}'
+        # return f'{self.building} - {self.id}'
         # return f'{self.id}' #Reduces db query but not readable!
 
 
@@ -220,8 +221,8 @@ class Person(models.Model):  # Rename it from pserson to user
     class Meta:
         abstract = True
 
-    def __str__(self) -> str:
-        return self.user.username
+    # def __str__(self) -> str:
+    #     return self.user.username
 
 
 class AbstractStatus(models.Model):
@@ -332,7 +333,7 @@ class ClassRoom(models.Model):
     updated_at = models.DateField(auto_now=True)
 
     def __str__(self) -> str:
-        return f'{self.building}-{self.name}'
+        return self.name
 
 
 class ClassTime(models.Model):
@@ -341,3 +342,48 @@ class ClassTime(models.Model):
     week_days = models.CharField(max_length=6)
     class Meta:
         unique_together = [['start_time', 'end_time','week_days']]
+    
+    def __str__(self) -> str:
+        return f'{self.start_time} - {self.end_time}, {self.week_days}'
+
+
+class Section(models.Model):
+    name = models.CharField(max_length=2)
+    course = models.ForeignKey(
+        Course, on_delete=models.PROTECT, related_name='sections')
+    classroom = models.ForeignKey(
+        ClassRoom, on_delete=models.PROTECT, related_name='sections')
+    classtime = models.ForeignKey(
+        ClassTime, on_delete=models.PROTECT, related_name='sections')
+
+    class Meta:
+        unique_together = [['classroom', 'classtime'], ['name', 'course']]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Attendance(models.Model):
+    P = 'P'
+    A = 'A'
+    E = 'E'
+    T = 'T'
+    MARK_CHOICES = (
+        (P, P),
+        (A, A),
+        (E, E),
+        (T, T)
+    )
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT)
+    semester = models.ForeignKey(Semester, on_delete=models.PROTECT)
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, related_name='attendances')
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='attendances')
+    section = models.ForeignKey(
+        Section, on_delete=models.PROTECT, related_name='attendances')
+    mark = models.CharField(max_length=1, choices=MARK_CHOICES)
+    comment = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+

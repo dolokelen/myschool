@@ -81,10 +81,15 @@ class SemesterViewSet(Permission):
     def partial_update(self, request, *args, **kwargs):
         semester = self.get_object()
         courses_to_add_ids = request.data.get('courses_to_add_ids', [])
-        existing_courses = semester.courses.all()
-        existing_courses_ids = existing_courses.values_list('id', flat=True)
-        combined_courses = list(existing_courses_ids) + courses_to_add_ids
-        semester.courses.set(combined_courses)
+        courses_to_remove_ids = request.data.get('courses_to_remove_ids', [])
+        if courses_to_add_ids:
+            existing_courses = semester.courses.all()
+            existing_courses_ids = existing_courses.values_list('id', flat=True)
+            combined_courses = list(existing_courses_ids) + courses_to_add_ids
+            semester.courses.set(combined_courses)
+        elif courses_to_remove_ids:
+            semester.courses.remove(*courses_to_remove_ids)
+
         return super().partial_update(request, *args, **kwargs)
 
     def get_serializer_class(self):
@@ -399,3 +404,33 @@ class ClassRoomViewSet(Permission):
 class ClassTimeViewSet(Permission):
     queryset = models.ClassTime.objects.all()
     serializer_class = serializers.ClassTimeSerializer
+
+
+class SectionViewSet(Permission):
+    queryset = models.Section.objects.select_related('course').select_related('classtime')\
+    .select_related('classroom').all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadSectionSerializer
+        return serializers.SectionSerializer
+
+
+class CurrentSemesterCourseViewSet(Permission):
+    http_method_names = ['get']
+    serializer_class = serializers.CurrentSemesterCourseSerializer
+
+    def get_queryset(self):
+        current_semester = models.Semester.objects.filter(is_current=True)
+        return current_semester
+    
+
+class AttendanceViewSet(ModelViewSet):
+    queryset = models.Attendance.objects.select_related('student').select_related('course')\
+    .select_related('school_year').select_related('semester').select_related('section').all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadAttendanceSerializer
+        return serializers.AttendanceSerializer
+        

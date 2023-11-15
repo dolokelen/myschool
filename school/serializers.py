@@ -247,6 +247,8 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     employeeaddress = EmployeeAddressSerializer()
     office = ReadOfficeSerializer()
     supervisor = ReadableSupervisorSerializer()
+    #These supervisor and office serializers are the promble for the ridiculous queries, 
+    # you could send an extra requests to their endpoints and then find the employee office and supervissor!!!
     department = SimpleDepartmentSerializer()
     joined_at = serializers.SerializerMethodField()
 
@@ -437,7 +439,67 @@ class ReadClassRoomSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'dimension', 'created_at', 'building']
 
 
+class SimpleClassRoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ClassRoom
+        fields = ['id', 'name']
+
+
 class ClassTimeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ClassTime
         fields = ['id', 'start_time', 'end_time', 'week_days']
+
+
+class SectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Section
+        fields = ['id', 'name', 'course', 'classroom', 'classtime']
+
+
+class SimpleCourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Course
+        fields = ['id', 'code']
+
+
+class ReadSectionSerializer(serializers.ModelSerializer):
+    course = SimpleCourseSerializer()
+    classroom = SimpleClassRoomSerializer()
+    classtime = ClassTimeSerializer()
+
+    class Meta:
+        model = models.Section
+        fields = ['id', 'name', 'course', 'classroom', 'classtime']
+
+    
+class SimpleSemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        models = models.Semester
+        fields = ['id', 'name']
+
+
+class CurrentSemesterCourseSerializer(serializers.ModelSerializer):
+    courses = SimpleCourseSerializer(many=True)
+    class Meta:
+        model = models.Semester
+        fields = ['id', 'courses']
+
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Attendance
+        fields = ['id', 'student', 'school_year', 'semester',
+                  'course', 'section', 'mark', 'comment']
+
+
+class ReadAttendanceSerializer(serializers.ModelSerializer):
+    student = SimpleStudentSerializer()
+    school_year = SchoolYearSerializer()
+    semester = SimpleSemesterSerializer()
+    course = SimpleCourseSerializer()
+
+    class Meta:
+        model = models.Attendance
+        fields = ['id', 'student', 'school_year', 'semester',
+                  'course', 'section', 'mark', 'comment']
