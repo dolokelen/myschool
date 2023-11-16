@@ -24,7 +24,6 @@ router.register('classtimes', views.ClassTimeViewSet)
 router.register('sections', views.SectionViewSet)
 router.register('current-semester-courses',
                 views.CurrentSemesterCourseViewSet, basename='current-semester-courses')
-router.register('attendances', views.AttendanceViewSet)
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')
@@ -38,9 +37,15 @@ buildings_router = routers.NestedDefaultRouter(
 buildings_router.register(
     'address', views.BuildingAddressViewSet, basename='building-address')
 
+sections_router = routers.NestedDefaultRouter(
+    router, 'sections', lookup='sections')
+sections_router.register(
+    'attendances', views.AttendanceViewSet, basename='section-attendances')
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(departments_router.urls)),
     path("", include(buildings_router.urls)),
+    path("", include(sections_router.urls)),
 
 ]

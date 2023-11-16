@@ -85,8 +85,7 @@ class Status(models.Model):
 
 
 class Course(Status):  # preload any 1-m or m-m fields in SemesterSerializer
-    department = models.ForeignKey(
-        Department, on_delete=models.PROTECT, related_name='courses')
+    departments = models.ManyToManyField(Department, related_name='courses')
     code = models.CharField(max_length=50, unique=True)
     prerequisite = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='prerequisites')
@@ -214,6 +213,7 @@ class Person(models.Model):  # Rename it from pserson to user
     birth_date = models.DateField()
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
     religion = models.CharField(max_length=9, choices=RELIGION_CHOICES)
+    phone = models.CharField(max_length=15)
     image = models.ImageField(
         upload_to=image_upload_path, validators=[validate_file_size])
     joined_at = models.DateField(auto_now_add=True)
@@ -269,7 +269,6 @@ class Employee(AbstractStatus, Person):
     office = models.ForeignKey(
         Office, on_delete=models.PROTECT, related_name='employees')
     salary = models.DecimalField(max_digits=6, decimal_places=2)
-    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
     term_of_reference = models.FileField(
         upload_to='school/TOR', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
 
@@ -289,7 +288,6 @@ class Teacher(AbstractStatus, Person):
         Office, on_delete=models.PROTECT, related_name='teachers')
     term_of_reference = models.FileField(
         upload_to=tor_upload_path, validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
 
 
 class TeacherAddress(Address):
@@ -316,9 +314,9 @@ class Student(Status, Person):
         Major, on_delete=models.PROTECT, related_name='students')
     student_number = models.CharField(max_length=255, default=student_number_generator)#Try to make it unique although the func is generating unique values.
     registration_fee = models.DecimalField(max_digits=6, decimal_places=2)#Belongs to enrollment
-    phone = models.CharField(max_length=15)  # This belong to Person cls!!!
     is_transfer = models.BooleanField(default=False)
-    #is_scholarship = models.BooleanField(default=False) Belongs to enrollment
+
+
 class StudentAddress(Address):
     student = models.OneToOneField(
         Student, on_delete=models.CASCADE, primary_key=True, related_name='studentaddress')
@@ -385,5 +383,38 @@ class Attendance(models.Model):
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    #They should be date instead of datetime!!!
+
+
+# class Enrollment(models.Model):
+#     APPROVED = 'Approved'
+#     PENDING = 'Pending'
+#     CANCELLED = 'Cancelled'
+#     STATUS_CHOICES = (
+#         (APPROVED, APPROVED),
+#         (PENDING, PENDING),
+#         (CANCELLED, CANCELLED)
+#     )
+#     student = models.ForeignKey(
+#         Student, on_delete=models.PROTECT, related_name='enrollments')
+#     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
+#     section = models.ForeignKey(
+#         Section, on_delete=models.PROTECT, related_name='enrollments')
+#     semester = models.ForeignKey(
+#         Semester, on_delete=models.PROTECT, related_name='enrollments')
+#     school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
+#     status = models.CharField(
+#         max_length=9, choices=STATUS_CHOICES, default=PENDING)
+#     has_scholarship = models.BooleanField(default=False)
+#     date = models.DateTimeField(auto_now_add=True)
+#     #Check if the student has completed the prerequisite first b/f enrolling!!!
+
+#     class Meta:
+#         unique_together = [['student', 'course', 'section']]
+
+#     def __str__(self) -> str:
+#         return f'{self.student.person.first_name} {self.course.code} section {str(self.section.name)}'
+
+
 
 

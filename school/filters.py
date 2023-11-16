@@ -5,7 +5,6 @@ class CourseFilter(FilterSet):
     class Meta:
         model = models.Course
         fields = {
-            'department_id': ['exact'],
             'prerequisite': ['exact']
         }
 

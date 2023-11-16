@@ -60,7 +60,7 @@ class DepartmentContactViewSet(ModelViewSet):
 
 class CourseViewSet(Permission):
     queryset = models.Course.objects.select_related(
-        'prerequisite').select_related('department').prefetch_related('sections').all()
+        'prerequisite').prefetch_related('departments').prefetch_related('sections').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = filters.CourseFilter
     search_fields = ['code', 'title']
@@ -426,11 +426,15 @@ class CurrentSemesterCourseViewSet(Permission):
     
 
 class AttendanceViewSet(ModelViewSet):
-    queryset = models.Attendance.objects.select_related('student').select_related('course')\
-    .select_related('school_year').select_related('semester').select_related('section').all()
+    def get_queryset(self):
+        queryset = models.Attendance.objects.filter(section_id=self.kwargs['sections_pk'])\
+        .select_related('student').select_related('course')\
+            .select_related('school_year').select_related('semester').select_related('section')
+        return queryset
     
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadAttendanceSerializer
         return serializers.AttendanceSerializer
         
+    

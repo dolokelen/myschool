@@ -88,7 +88,7 @@ class SimpleSectionSerializer(serializers.ModelSerializer):
 
 
 class ReadCourseSerializer(serializers.ModelSerializer):
-    department = SimpleDepartmentSerializer()
+    departments = SimpleDepartmentSerializer(many=True)
     prerequisite = CoursePrerequisiteSerializer()
     total_price = serializers.SerializerMethodField()
     sections = SimpleSectionSerializer(many=True)
@@ -99,7 +99,7 @@ class ReadCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Course
-        fields = ['id', 'code', 'title', 'department', 'level', 'prerequisite', 'sections',
+        fields = ['id', 'code', 'title', 'departments', 'level', 'prerequisite', 'sections',
                   'price_per_credit', 'credit', 'additional_fee', 'total_price']
 
 
@@ -111,7 +111,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Course
-        fields = ['id', 'code', 'title', 'department', 'level', 'prerequisite',
+        fields = ['id', 'code', 'title', 'departments', 'level', 'prerequisite',
                   'price_per_credit', 'credit', 'additional_fee', 'total_price']
 
 
@@ -133,7 +133,7 @@ class SemesterSerializer(serializers.ModelSerializer):
         semester = models.Semester.objects.create(**validated_data)
         courses = models.Course.objects \
             .select_related('prerequisite') \
-            .select_related('department').all().distinct()
+            .prefetch_related('departments').all().distinct()
         semester.courses.set(courses)
 
         return semester
@@ -482,7 +482,7 @@ class ReadSectionSerializer(serializers.ModelSerializer):
     
 class SimpleSemesterSerializer(serializers.ModelSerializer):
     class Meta:
-        models = models.Semester
+        model = models.Semester
         fields = ['id', 'name']
 
 
@@ -505,8 +505,9 @@ class ReadAttendanceSerializer(serializers.ModelSerializer):
     school_year = SchoolYearSerializer()
     semester = SimpleSemesterSerializer()
     course = SimpleCourseSerializer()
+    section = SimpleSectionSerializer()
 
     class Meta:
         model = models.Attendance
         fields = ['id', 'student', 'school_year', 'semester',
-                  'course', 'section', 'mark', 'comment']
+                  'course', 'section', 'mark', 'comment', 'created_at']
