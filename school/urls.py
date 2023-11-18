@@ -42,10 +42,17 @@ sections_router = routers.NestedDefaultRouter(
 sections_router.register(
     'attendances', views.AttendanceViewSet, basename='section-attendances')
 
+students_router = routers.NestedDefaultRouter(
+    router, 'students', lookup='students')
+students_router.register(
+    'enrollments', views.EnrollmentViewSet, basename='student-entrollments')
+students_router.register('eligible-courses', views.StudentEligibleCourseViewSet, basename='student-enrolls')
+
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(departments_router.urls)),
     path("", include(buildings_router.urls)),
     path("", include(sections_router.urls)),
+    path("", include(students_router.urls)),
 
 ]

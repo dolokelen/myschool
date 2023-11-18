@@ -41,10 +41,18 @@ class DepartmentContactSerializer(serializers.ModelSerializer):
         fields = ['id', 'phone', 'email', 'department']
 
 
+class SimpleCourseSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Course
+        fields = ['id', 'code']
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     departmentaddress = DepartmentAddressSerializer()
     departmentcontact = DepartmentContactSerializer(many=True)
     number_of_courses = serializers.SerializerMethodField()
+    courses = SimpleCourseSerializer(many=True, read_only=True)
 
     def get_number_of_courses(self, department):
         return department.courses.count()
@@ -66,7 +74,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Department
-        fields = ['id', 'name', 'budget', 'duty', 'majors',
+        fields = ['id', 'name', 'budget', 'duty', 'majors', 'courses',
                   'number_of_courses', 'created_at', 'departmentaddress', 'departmentcontact']
 
 
@@ -81,6 +89,7 @@ class CoursePrerequisiteSerializer(serializers.ModelSerializer):
         model = models.Course
         fields = ['id', 'code']
 
+
 class SimpleSectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Section
@@ -92,7 +101,6 @@ class ReadCourseSerializer(serializers.ModelSerializer):
     prerequisite = CoursePrerequisiteSerializer()
     total_price = serializers.SerializerMethodField()
     sections = SimpleSectionSerializer(many=True)
-
 
     def get_total_price(self, course):
         return (course.credit * course.price_per_credit) + course.additional_fee
@@ -254,7 +262,7 @@ class ReadEmployeeSerializer(serializers.ModelSerializer):
     employeeaddress = EmployeeAddressSerializer()
     office = ReadOfficeSerializer()
     supervisor = ReadableSupervisorSerializer()
-    #These supervisor and office serializers are the promble for the ridiculous queries, 
+    # The supervisor and office serializers are the promble for the ridiculous queries,
     # you could send an extra requests to their endpoints and then find the employee office and supervissor!!!
     department = SimpleDepartmentSerializer()
     joined_at = serializers.SerializerMethodField()
@@ -464,12 +472,6 @@ class SectionSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'course', 'classroom', 'classtime']
 
 
-class SimpleCourseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Course
-        fields = ['id', 'code']
-
-
 class ReadSectionSerializer(serializers.ModelSerializer):
     course = SimpleCourseSerializer()
     classroom = SimpleClassRoomSerializer()
@@ -479,7 +481,7 @@ class ReadSectionSerializer(serializers.ModelSerializer):
         model = models.Section
         fields = ['id', 'name', 'course', 'classroom', 'classtime']
 
-    
+
 class SimpleSemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Semester
@@ -488,6 +490,7 @@ class SimpleSemesterSerializer(serializers.ModelSerializer):
 
 class CurrentSemesterCourseSerializer(serializers.ModelSerializer):
     courses = SimpleCourseSerializer(many=True)
+
     class Meta:
         model = models.Semester
         fields = ['id', 'courses']
@@ -511,3 +514,33 @@ class ReadAttendanceSerializer(serializers.ModelSerializer):
         model = models.Attendance
         fields = ['id', 'student', 'school_year', 'semester',
                   'course', 'section', 'mark', 'comment', 'created_at']
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):    
+    class Meta:
+        model = models.Enrollment
+        fields = ['id', 'student', 'course', 'section', 'semester',
+                  'school_year', 'status', 'has_scholarship', 'date']
+
+
+class ReadEnrollmentSerializer(serializers.ModelSerializer):
+    student = SimpleStudentSerializer()
+    course = SimpleCourseSerializer()
+    section = SimpleSectionSerializer()
+    semester = SimpleSemesterSerializer()
+    school_year = SchoolYearSerializer()
+
+    class Meta:
+        model = models.Enrollment
+        fields = ['id', 'student', 'course', 'section', 'course',
+                  'semester', 'school_year', 'status', 'has_scholarship', 'date']
+
+
+class StudentEligibleCourseSerializer(serializers.ModelSerializer):
+    sections = SimpleSectionSerializer(many=True)
+
+    class Meta:
+        model = models.Course
+        fields = ['id', 'code', 'sections']
+
+

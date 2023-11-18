@@ -304,7 +304,6 @@ class Major(models.Model):
         return self.name
 
 
-
 class Student(Status, Person):
     department = models.ForeignKey(
         Department, on_delete=models.PROTECT, related_name='students')
@@ -386,35 +385,29 @@ class Attendance(models.Model):
     #They should be date instead of datetime!!!
 
 
-# class Enrollment(models.Model):
-#     APPROVED = 'Approved'
-#     PENDING = 'Pending'
-#     CANCELLED = 'Cancelled'
-#     STATUS_CHOICES = (
-#         (APPROVED, APPROVED),
-#         (PENDING, PENDING),
-#         (CANCELLED, CANCELLED)
-#     )
-#     student = models.ForeignKey(
-#         Student, on_delete=models.PROTECT, related_name='enrollments')
-#     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
-#     section = models.ForeignKey(
-#         Section, on_delete=models.PROTECT, related_name='enrollments')
-#     semester = models.ForeignKey(
-#         Semester, on_delete=models.PROTECT, related_name='enrollments')
-#     school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
-#     status = models.CharField(
-#         max_length=9, choices=STATUS_CHOICES, default=PENDING)
-#     has_scholarship = models.BooleanField(default=False)
-#     date = models.DateTimeField(auto_now_add=True)
-#     #Check if the student has completed the prerequisite first b/f enrolling!!!
+class Enrollment(models.Model):
+    APPROVED = 'Approved'
+    PENDING = 'Pending'
+    CANCELLED = 'Cancelled'
+    STATUS_CHOICES = (
+        (PENDING, PENDING),
+        (APPROVED, APPROVED),
+        (CANCELLED, CANCELLED)
+    )
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, related_name='enrollments')
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
+    section = models.ForeignKey(
+        Section, on_delete=models.PROTECT, related_name='enrollments')
+    semester = models.ForeignKey(
+        Semester, on_delete=models.PROTECT, related_name='enrollments')
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
+    status = models.CharField(
+        max_length=9, choices=STATUS_CHOICES, default=PENDING)
+    has_scholarship = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
 
-#     class Meta:
-#         unique_together = [['student', 'course', 'section']]
-
-#     def __str__(self) -> str:
-#         return f'{self.student.person.first_name} {self.course.code} section {str(self.section.name)}'
-
-
+    class Meta:
+        unique_together = [['student', 'course', 'section']]
 
 
