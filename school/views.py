@@ -436,7 +436,15 @@ class AttendanceViewSet(ModelViewSet):
         if self.request.method == 'GET':
             return serializers.ReadAttendanceSerializer
         return serializers.AttendanceSerializer
-        
+
+    @transaction.atomic()
+    def create(self, request, *args, **kwargs):
+        for attendance in request.data:
+            serializer = self.get_serializer(data=attendance)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+       
 
 class EnrollmentViewSet(ModelViewSet):
     def get_serializer_class(self):
@@ -495,6 +503,21 @@ class StudentEligibleCourseViewSet(ModelViewSet):
         return eligible_courses
     
 
+class CurrentSemesterSectionEnrollmentViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadEnrollmentSerializer
 
+    def get_queryset(self):
+        section_id = self.kwargs['sections_pk']
 
-    
+        try:
+            section_obj = models.Section.objects.get(id=section_id)
+        except models.Section.DoesNotExist:
+            return Response({'error': "Section does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        
+        course_id = section_obj.course.id
+        curr_enrollments = models.Enrollment.objects.filter(course_id=course_id, section_id=section_obj.id, semester__is_current=True).\
+            select_related('school_year', 'semester', 'course', 'student', 'section')
+       
+        return curr_enrollments
+        

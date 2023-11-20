@@ -22,8 +22,7 @@ router.register('student-profile', views.StudentProfileViewSet,
 router.register('classrooms', views.ClassRoomViewSet)
 router.register('classtimes', views.ClassTimeViewSet)
 router.register('sections', views.SectionViewSet)
-router.register('current-semester-courses',
-                views.CurrentSemesterCourseViewSet, basename='current-semester-courses')
+router.register('current-semester-courses',views.CurrentSemesterCourseViewSet, basename='current-semester-courses')
 
 departments_router = routers.NestedDefaultRouter(
     router, 'departments', lookup='departments')
@@ -41,6 +40,8 @@ sections_router = routers.NestedDefaultRouter(
     router, 'sections', lookup='sections')
 sections_router.register(
     'attendances', views.AttendanceViewSet, basename='section-attendances')
+sections_router.register('current-semester-section-enrollments',
+                views.CurrentSemesterSectionEnrollmentViewSet, basename='curr-sem-sec-enrollments')
 
 students_router = routers.NestedDefaultRouter(
     router, 'students', lookup='students')
