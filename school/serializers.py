@@ -536,11 +536,40 @@ class ReadEnrollmentSerializer(serializers.ModelSerializer):
                   'semester', 'school_year', 'status', 'has_scholarship', 'date']
 
 
-class StudentEligibleCourseSerializer(serializers.ModelSerializer):
+class CourseAndSectionsSerializer(serializers.ModelSerializer):
     sections = SimpleSectionSerializer(many=True)
 
     class Meta:
         model = models.Course
         fields = ['id', 'code', 'sections']
+
+
+class TeachSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Teach
+        fields = ['id', 'teacher', 'course', 'section', 'semester', 'school_year']
+
+
+class ReadTeachSerializer(serializers.ModelSerializer):
+    teacher = SimpleTeacherSerializer()
+    course = SimpleCourseSerializer()
+    section = SimpleSectionSerializer()
+    semester = SimpleSemesterSerializer()
+    school_year = SchoolYearSerializer()
+
+    class Meta:
+        model = models.Teach
+        fields = ['id', 'teacher', 'course', 'section', 'semester', 'school_year', 'date']
+
+
+class SectionClassroomClasstimeSerializer(serializers.ModelSerializer):
+    classtime = ClassTimeSerializer()
+    classroom = SimpleClassRoomSerializer()
+
+    class Meta:
+        model = models.Section
+        fields = ['id', 'name', 'classtime', 'classroom']
+
+
 
 

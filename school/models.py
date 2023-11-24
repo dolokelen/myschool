@@ -411,3 +411,19 @@ class Enrollment(models.Model):
         unique_together = [['student', 'course', 'section']]
 
 
+class Teach(models.Model):
+    teacher = models.ForeignKey(
+        Teacher, on_delete=models.PROTECT, related_name='teaches')
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='teaches')
+    section = models.ForeignKey(
+        Section, on_delete=models.PROTECT, related_name='teaches')
+    school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='teaches')
+    semester = models.ForeignKey(
+        Semester, on_delete=models.PROTECT, related_name='teaches')
+    date = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = [['teacher', 'course', 'section', 'semester', 'school_year']]
+
+    
+
+

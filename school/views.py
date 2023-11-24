@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Prefetch, Q
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -84,7 +85,8 @@ class SemesterViewSet(Permission):
         courses_to_remove_ids = request.data.get('courses_to_remove_ids', [])
         if courses_to_add_ids:
             existing_courses = semester.courses.all()
-            existing_courses_ids = existing_courses.values_list('id', flat=True)
+            existing_courses_ids = existing_courses.values_list(
+                'id', flat=True)
             combined_courses = list(existing_courses_ids) + courses_to_add_ids
             semester.courses.set(combined_courses)
         elif courses_to_remove_ids:
@@ -216,6 +218,7 @@ class EmployeeProfileViewSet(ModelViewSet):
 
 
 class TeacherViewSet(Permission):
+    #Only return current semester teacher just how you did course.
     filter_backends = [DjangoFilterBackend]
     filterset_class = filters.TeacherFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -399,7 +402,7 @@ class ClassRoomViewSet(Permission):
         if self.request.method == 'GET':
             return serializers.ReadClassRoomSerializer
         return serializers.ClassRoomSerializer
-    
+
 
 class ClassTimeViewSet(Permission):
     queryset = models.ClassTime.objects.all()
@@ -408,7 +411,7 @@ class ClassTimeViewSet(Permission):
 
 class SectionViewSet(Permission):
     queryset = models.Section.objects.select_related('course').select_related('classtime')\
-    .select_related('classroom').all()
+        .select_related('classroom').all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -423,15 +426,15 @@ class CurrentSemesterCourseViewSet(Permission):
     def get_queryset(self):
         current_semester = models.Semester.objects.filter(is_current=True)
         return current_semester
-    
+
 
 class AttendanceViewSet(ModelViewSet):
     def get_queryset(self):
         queryset = models.Attendance.objects.filter(section_id=self.kwargs['sections_pk'])\
-        .select_related('student').select_related('course')\
+            .select_related('student').select_related('course')\
             .select_related('school_year').select_related('semester').select_related('section')
         return queryset
-    
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadAttendanceSerializer
@@ -444,14 +447,14 @@ class AttendanceViewSet(ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-       
+
 
 class EnrollmentViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return serializers.ReadEnrollmentSerializer
         return serializers.EnrollmentSerializer
-    
+
     def get_queryset(self):
         student_id = self.kwargs['students_pk']
         try:
@@ -459,49 +462,50 @@ class EnrollmentViewSet(ModelViewSet):
         except models.Student.DoesNotExist:
             return Response({'error': 'student does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        student_enrollments = student_obj.enrollments.select_related( 'course',
-            'section',
-            'semester',
-            'school_year',).all()
-        
+        student_enrollments = student_obj.enrollments.select_related('course',
+                                                                     'section',
+                                                                     'semester',
+                                                                     'school_year',).all()
+
         return student_enrollments
-    
+
 
 class StudentEligibleCourseViewSet(ModelViewSet):
     http_method_names = ['get']
-    serializer_class = serializers.StudentEligibleCourseSerializer
+    serializer_class = serializers.CourseAndSectionsSerializer
 
     def get_queryset(self):
         student_id = self.kwargs['students_pk']
-        #You also have to ensure that the student has a passing mark for the prerequisite for that course.
-        
+        # You also have to ensure that the student has a passing mark for the prerequisite for that course.
+
         try:
             student_obj = models.Student.objects.get(user_id=student_id)
         except models.Student.DoesNotExist:
             return Response({'error': 'student does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        student_enrollments = student_obj.enrollments.select_related( 'course',
-            'section',
-            'semester',
-            'school_year',).all()
+        student_enrollments = student_obj.enrollments.select_related('course',
+                                                                     'section',
+                                                                     'semester',
+                                                                     'school_year',).all()
         completed_courses = [cos.course.code for cos in student_enrollments]
-        
+
         student_department = student_obj.department
-        department_courses = student_department.courses.select_related('prerequisite').prefetch_related('departments').all()
+        department_courses = student_department.courses.select_related(
+            'prerequisite').prefetch_related('departments').all()
         current_courses = department_courses.filter(semesters__is_current=True)
-        
+
         eligible_courses = []
 
         for course in current_courses:
             prerequisite = course.prerequisite
 
             if (not prerequisite and course.code not in completed_courses) or \
-                (prerequisite and prerequisite.code in completed_courses and course.code not in completed_courses):
-           
+                    (prerequisite and prerequisite.code in completed_courses and course.code not in completed_courses):
+
                 eligible_courses.append(course)
 
         return eligible_courses
-    
+
 
 class CurrentSemesterSectionEnrollmentViewSet(ModelViewSet):
     http_method_names = ['get']
@@ -514,10 +518,142 @@ class CurrentSemesterSectionEnrollmentViewSet(ModelViewSet):
             section_obj = models.Section.objects.get(id=section_id)
         except models.Section.DoesNotExist:
             return Response({'error': "Section does not exist"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         course_id = section_obj.course.id
         curr_enrollments = models.Enrollment.objects.filter(course_id=course_id, section_id=section_obj.id, semester__is_current=True).\
-            select_related('school_year', 'semester', 'course', 'student', 'section')
-       
+            select_related('school_year', 'semester',
+                           'course', 'student', 'section')
+
         return curr_enrollments
+
+
+def prefetch_enrollments():
+    prefetch_query = Prefetch(
+        'section__enrollments',
+        queryset=models.Enrollment.objects.filter(
+            Q(status='Approved') & Q(semester__is_current=True)
+        ).select_related('student', 'course', 'semester', 'school_year', 'section'),
+        to_attr='approved_enrollments'
+    )
+    return prefetch_query
+
+# def prefetch_enrollments():
+#     prefetch_query = Prefetch(
+#         'section__enrollments',
+#         queryset=models.Enrollment.objects.filter(
+#             Q(status='Approved') & Q(semester__is_current=True)
+#         ).select_related('student', 'course', 'semester', 'school_year', 'section'),
+#         to_attr='approved_enrollments'
+#     )
+#     return prefetch_query
+
+
+class TeachAndSectionEnrollmentViewSet(ModelViewSet):
+    def get_queryset(self):
+        try:
+            teacher = models.Teacher.objects.get(
+                user_id=self.kwargs['teachers_pk'])
+        except models.Teacher.DoesNotExist:
+            return Response({'error': 'Teacher does not exist'})
+
+        teaches = teacher.teaches.select_related(
+            'course', 'section', 'school_year', 'semester', 'teacher',
+        ).prefetch_related(prefetch_enrollments()).all()
+
+        assigned_courses = set(
+            enrollment for teach in teaches for enrollment in teach.section.approved_enrollments)
+        return assigned_courses
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadEnrollmentSerializer
+        return serializers.TeachSerializer
+    
+
+class SectionClasstimeViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ClassTimeSerializer
+    
+    def get_queryset(self):
+        section_id = self.kwargs['sections_pk']
+
+        queryset = models.ClassTime.objects.filter(sections=section_id)
+        return queryset
+    
+
+class SectionClassroomViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadClassRoomSerializer
+
+    def get_queryset(self):
+        section_id = self.kwargs['sections_pk']
+
+        queryset = models.ClassRoom.objects.filter(sections=section_id).select_related('building')
+        return queryset
+
+
+class OnlyCourseWithSectionViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.CourseAndSectionsSerializer
+
+    # def get_queryset(self):
+        # teaches = models.Teach.objects.filter(semester__is_current=True).select_related('course', 'section', 'semester', 'school_year', 'teacher')
+        # assigned_course_section = [{teach.course.id: teach.section.id} for teach in teaches]
+        # queryset = models.Course.objects.filter(semesters__is_current=True).prefetch_related('sections')
+        # all_courses_sections = [course for course in queryset if course.sections.all()]
+        # both_assigned_unassigned = [{course.id: [section.id for section in course.sections.all()]} for course in all_courses_sections]
         
+        # print('********BOTH: ', both_assigned_unassigned)
+        # print('********ASSIGNED: ', assigned_course_section)
+        
+        # available_sections = []
+        
+        # for assigned_dict in assigned_course_section:
+        #     for course_id, sec_id in assigned_dict.items():
+        #         for unassigned_dict in both_assigned_unassigned:
+        #             if course_id in unassigned_dict and sec_id in unassigned_dict[course_id]:
+        #                 unassigned_dict[course_id].remove(sec_id)
+        #                 if unassigned_dict[course_id]:
+        #                     print('******REMAING SECTIONS', unassigned_dict[course_id])
+        #                     course = models.Course.objects.get(id=course_id)
+        #                     for section in course.sections.all():
+        #                         if section.id not in unassigned_dict[course_id]:
+        #                             course.sections.remove(section)
+        #                     print('Retrieved COURSE SECTIONS', [s.name for s in course.sections.all()])
+        #                     course.sections.set(models.Section.objects.filter(id__in=unassigned_dict[course_id]))
+        #                     print('*****SET SECTIONS', [s.name for s in course.sections.all()])
+        #                     available_sections.append(course)
+        #                     # available_sections.append({course_id: unassigned_dict[course_id]})
+        #                     # available_sections.append(models.Course(id=course_id, sections=models.Section.objects.filter(id__in=unassigned_dict[course_id])))
+        # print('********AVAILABLE SECTIONS: ', available_sections)
+        # return available_sections
+    
+    
+    def get_queryset(self):
+        queryset = models.Course.objects.filter(semesters__is_current=True).prefetch_related('sections')
+        return [course for course in queryset if course.sections.all()]
+        
+
+class TeacherAssignSectionViewSet(ModelViewSet):
+    http_method_names = ['get']
+    serializer_class = serializers.ReadTeachSerializer
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['teachers_pk']
+
+        try:
+            _ = models.Teacher.objects.get(user_id=teacher_id)
+        except models.Teacher.DoesNotExist:
+            return Response({'error': 'Teacher does not exist'})
+
+        return models.Teach.objects.filter(teacher_id=teacher_id, semester__is_current=True).\
+            select_related('course', 'section', 'school_year', 'semester', 'teacher')
+        
+
+class TeachUpdate(ModelViewSet):
+    queryset = models.Teach.objects.select_related('course', 'teacher', 'semester', 'school_year', 'section').all()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadTeachSerializer
+        return  serializers.TeachSerializer
