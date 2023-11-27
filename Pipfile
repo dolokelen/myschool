@@ -12,6 +12,8 @@ django-debug-toolbar = "*"
 django-filter = "*"
 drf-nested-routers = "*"
 pillow = "*"
+pandas = "*"
+openpyxl = "*"
 
 [dev-packages]
 

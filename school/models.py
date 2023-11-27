@@ -1,5 +1,5 @@
 from django.db import models, transaction
-from django.db.models import F, Max
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from .utility import image_upload_path, student_number_generator, tor_upload_path
@@ -155,15 +155,15 @@ class BuildingAddress(Address):
 
 
 class Office(models.Model):
-    #Give office a name filed!!!!
+    # Give office a name filed!!!!
     building = models.ForeignKey(
         Building, on_delete=models.PROTECT, related_name='offices')
     dimension = models.CharField(max_length=100)
 
     # def __str__(self) -> str:
-        # This is very terrible in performance, especially at the employee endpoint!!!
-        # return f'{self.building} - {self.id}'
-        # return f'{self.id}' #Reduces db query but not readable!
+    # This is very terrible in performance, especially at the employee endpoint!!!
+    # return f'{self.building} - {self.id}'
+    # return f'{self.id}' #Reduces db query but not readable!
 
 
 class Document(models.Model):
@@ -311,8 +311,11 @@ class Student(Status, Person):
         Teacher, on_delete=models.PROTECT, related_name='mentees')
     major = models.ForeignKey(
         Major, on_delete=models.PROTECT, related_name='students')
-    student_number = models.CharField(max_length=255, default=student_number_generator)#Try to make it unique although the func is generating unique values.
-    registration_fee = models.DecimalField(max_digits=6, decimal_places=2)#Belongs to enrollment
+    # Try to make it unique although the func is generating unique values.
+    student_number = models.CharField(
+        max_length=255, default=student_number_generator)
+    registration_fee = models.DecimalField(
+        max_digits=6, decimal_places=2)  # Belongs to enrollment
     is_transfer = models.BooleanField(default=False)
 
 
@@ -337,9 +340,10 @@ class ClassTime(models.Model):
     start_time = models.CharField(max_length=7)
     end_time = models.CharField(max_length=7)
     week_days = models.CharField(max_length=6)
+
     class Meta:
-        unique_together = [['start_time', 'end_time','week_days']]
-    
+        unique_together = [['start_time', 'end_time', 'week_days']]
+
     def __str__(self) -> str:
         return f'{self.start_time} - {self.end_time}, {self.week_days}'
 
@@ -375,14 +379,15 @@ class Attendance(models.Model):
     semester = models.ForeignKey(Semester, on_delete=models.PROTECT)
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, related_name='attendances')
-    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='attendances')
+    course = models.ForeignKey(
+        Course, on_delete=models.PROTECT, related_name='attendances')
     section = models.ForeignKey(
         Section, on_delete=models.PROTECT, related_name='attendances')
     mark = models.CharField(max_length=1, choices=MARK_CHOICES)
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    #They should be date instead of datetime!!!
+    # They should be date instead of datetime!!!
 
 
 class Enrollment(models.Model):
@@ -396,34 +401,73 @@ class Enrollment(models.Model):
     )
     student = models.ForeignKey(
         Student, on_delete=models.PROTECT, related_name='enrollments')
-    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments')
+    course = models.ForeignKey(
+        Course, on_delete=models.PROTECT, related_name='enrollments')
     section = models.ForeignKey(
         Section, on_delete=models.PROTECT, related_name='enrollments')
     semester = models.ForeignKey(
         Semester, on_delete=models.PROTECT, related_name='enrollments')
-    school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
+    school_year = models.ForeignKey(
+        SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
     status = models.CharField(
         max_length=9, choices=STATUS_CHOICES, default=PENDING)
-    has_scholarship = models.BooleanField(default=False)
+    has_scholarship = models.BooleanField(default=False)#Remove this field, but invegistate usage first
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = [['student', 'course', 'section']]
+        unique_together = [['student', 'course',
+                            'section', 'semester', 'school_year']]
 
 
 class Teach(models.Model):
     teacher = models.ForeignKey(
         Teacher, on_delete=models.PROTECT, related_name='teaches')
-    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='teaches')
+    course = models.ForeignKey(
+        Course, on_delete=models.PROTECT, related_name='teaches')
     section = models.ForeignKey(
         Section, on_delete=models.PROTECT, related_name='teaches')
-    school_year = models.ForeignKey(SchoolYear, on_delete=models.PROTECT, related_name='teaches')
+    school_year = models.ForeignKey(
+        SchoolYear, on_delete=models.PROTECT, related_name='teaches')
     semester = models.ForeignKey(
         Semester, on_delete=models.PROTECT, related_name='teaches')
     date = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        unique_together = [['teacher', 'course', 'section', 'semester', 'school_year']]
+        unique_together = [['teacher', 'course',
+                            'section', 'semester', 'school_year']]
 
-    
 
+class Grade(models.Model):
+    student = models.ForeignKey(
+        Student, on_delete=models.PROTECT, related_name='grades')
+    school_year = models.ForeignKey(
+        SchoolYear, on_delete=models.PROTECT, related_name='grades')
+    semester = models.ForeignKey(
+        Semester, on_delete=models.PROTECT, related_name='grades')
+    course = models.ForeignKey(
+        Course, on_delete=models.PROTECT, related_name='grades')
+    section = models.ForeignKey(
+        Section, on_delete=models.PROTECT, related_name='grades')
+    attendance = models.DecimalField(max_digits=4, decimal_places=2, validators=[
+                                     MinValueValidator(0), MaxValueValidator(10)])
+    quiz = models.DecimalField(max_digits=4, decimal_places=2, validators=[
+                               MinValueValidator(0), MaxValueValidator(10)])
+    assignment = models.DecimalField(max_digits=3, decimal_places=2, validators=[
+                                     MinValueValidator(0), MaxValueValidator(5)])
+    midterm = models.DecimalField(max_digits=4, decimal_places=2, validators=[
+                                  MinValueValidator(0), MaxValueValidator(25)])
+    project = models.DecimalField(max_digits=4, decimal_places=2, validators=[
+                                  MinValueValidator(0), MaxValueValidator(15)])
+    final = models.DecimalField(max_digits=4, decimal_places=2, validators=[
+                                MinValueValidator(0), MaxValueValidator(35)])
+    graded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = [['student', 'school_year', 'semester', 'course', 'section']]
+
+# class SemesterEnrollment(models.Model):
+# semester
+# school_year
+# has_scholarship
+# student_status/level

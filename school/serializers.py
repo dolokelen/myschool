@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 from core.serializers import UserCreateSerializer, SimpleUserSerializer
 from . import models
@@ -516,7 +517,7 @@ class ReadAttendanceSerializer(serializers.ModelSerializer):
                   'course', 'section', 'mark', 'comment', 'created_at']
 
 
-class EnrollmentSerializer(serializers.ModelSerializer):    
+class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Enrollment
         fields = ['id', 'student', 'course', 'section', 'semester',
@@ -547,7 +548,8 @@ class CourseAndSectionsSerializer(serializers.ModelSerializer):
 class TeachSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Teach
-        fields = ['id', 'teacher', 'course', 'section', 'semester', 'school_year']
+        fields = ['id', 'teacher', 'course',
+                  'section', 'semester', 'school_year']
 
 
 class ReadTeachSerializer(serializers.ModelSerializer):
@@ -559,7 +561,8 @@ class ReadTeachSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Teach
-        fields = ['id', 'teacher', 'course', 'section', 'semester', 'school_year', 'date']
+        fields = ['id', 'teacher', 'course', 'section',
+                  'semester', 'school_year', 'date']
 
 
 class SectionClassroomClasstimeSerializer(serializers.ModelSerializer):
@@ -571,5 +574,68 @@ class SectionClassroomClasstimeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'classtime', 'classroom']
 
 
+class UploadGradeSerializer(serializers.Serializer):
+    excel_file = serializers.FileField(validators=[FileExtensionValidator(allowed_extensions=['xlsx'])])
+
+
+class GradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Grade
+        fields = ['id', 'student', 'school_year', 'semester', 'course', 'section',
+                  'attendance', 'quiz', 'assignment', 'midterm', 'project', 'final']
+
+
+class ReadGradeSerializer(serializers.ModelSerializer):
+    POINT_FOR_LETTER_A_GRADE = 4
+    POINT_FOR_LETTER_B_GRADE = 3
+    POINT_FOR_LETTER_C_GRADE = 2
+    POINT_FOR_LETTER_D_GRADE = 1
+
+    student = SimpleStudentSerializer()
+    school_year = SchoolYearSerializer()
+    course = SimpleCourseSerializer()
+    section = SimpleSectionSerializer()
+    letter = serializers.SerializerMethodField()
+    grade_point = serializers.SerializerMethodField()
+    total_score = serializers.SerializerMethodField()
+
+    def get_letter(self, obj):
+        avg = avg = self.get_average(obj)
+        if avg >= 90:
+            return 'A'
+        if avg >= 80:
+            return 'B'
+        if avg >= 70:
+            return 'C'
+        if avg >= 60:
+            return 'D'
+        return 'F'
+    
+    def get_total_score(self, obj):
+        return self.get_average(obj)
+    
+    def get_average(self, obj):
+        return int(obj.attendance) + int(obj.assignment) + int(obj.quiz) + int(obj.midterm) + int(obj.project) + int(obj.final)
+
+    def get_grade_point(self, obj):
+        avg = self.get_average(obj)
+        credit = models.Course.objects.get(code=obj.course.code).credit
+        return self.calc_grade_point(credit, avg)
+            
+    def calc_grade_point(self, credit, avg):
+        if avg >= 90:
+            return credit * self.POINT_FOR_LETTER_A_GRADE
+        if avg >= 80:
+            return credit * self.POINT_FOR_LETTER_B_GRADE
+        if avg >= 70:
+            return credit * self.POINT_FOR_LETTER_C_GRADE
+        if avg >= 60:
+            return credit * self.POINT_FOR_LETTER_D_GRADE
+        return 0
+
+    class Meta:
+        model = models.Grade
+        fields = ['id', 'student', 'school_year', 'semester', 'course', 'section', 'attendance', 
+                  'quiz', 'assignment', 'midterm', 'project', 'final', 'letter', 'grade_point', 'total_score']
 
 
