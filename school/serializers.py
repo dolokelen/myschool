@@ -593,6 +593,7 @@ class ReadGradeSerializer(serializers.ModelSerializer):
 
     student = SimpleStudentSerializer()
     school_year = SchoolYearSerializer()
+    semester = SimpleSemesterSerializer()
     course = SimpleCourseSerializer()
     section = SimpleSectionSerializer()
     letter = serializers.SerializerMethodField()
@@ -600,42 +601,53 @@ class ReadGradeSerializer(serializers.ModelSerializer):
     total_score = serializers.SerializerMethodField()
 
     def get_letter(self, obj):
-        avg = avg = self.get_average(obj)
-        if avg >= 90:
+        grades = self.grades_list(obj)
+
+        if not sum(grades):
+            return 'NG'
+        
+        for grade in grades:
+            if grade == 0:
+                return "I"
+            
+        score = self.grade_aggregate(obj)
+        if score >= 90:
             return 'A'
-        if avg >= 80:
+        if score >= 80:
             return 'B'
-        if avg >= 70:
+        if score >= 70:
             return 'C'
-        if avg >= 60:
+        if score >= 60:
             return 'D'
         return 'F'
     
     def get_total_score(self, obj):
-        return self.get_average(obj)
+        return self.grade_aggregate(obj)
     
-    def get_average(self, obj):
+    def grades_list(self, obj):
+        return [int(obj.attendance), int(obj.assignment), int(obj.quiz), int(obj.midterm), int(obj.project), int(obj.final)]
+        
+    def grade_aggregate(self, obj):
         return int(obj.attendance) + int(obj.assignment) + int(obj.quiz) + int(obj.midterm) + int(obj.project) + int(obj.final)
 
     def get_grade_point(self, obj):
-        avg = self.get_average(obj)
         credit = models.Course.objects.get(code=obj.course.code).credit
-        return self.calc_grade_point(credit, avg)
+        return self.calc_grade_point(credit, self.grade_aggregate(obj))
             
-    def calc_grade_point(self, credit, avg):
-        if avg >= 90:
+    def calc_grade_point(self, credit, score):
+        if score >= 90:
             return credit * self.POINT_FOR_LETTER_A_GRADE
-        if avg >= 80:
+        if score >= 80:
             return credit * self.POINT_FOR_LETTER_B_GRADE
-        if avg >= 70:
+        if score >= 70:
             return credit * self.POINT_FOR_LETTER_C_GRADE
-        if avg >= 60:
+        if score >= 60:
             return credit * self.POINT_FOR_LETTER_D_GRADE
         return 0
 
     class Meta:
         model = models.Grade
-        fields = ['id', 'student', 'school_year', 'semester', 'course', 'section', 'attendance', 
-                  'quiz', 'assignment', 'midterm', 'project', 'final', 'letter', 'grade_point', 'total_score']
+        fields = ['id', 'student', 'school_year', 'semester', 'course', 'section', 'attendance', 'quiz', 
+                  'assignment', 'midterm', 'project', 'final', 'letter', 'grade_point', 'total_score', 'graded_at']
 
 
