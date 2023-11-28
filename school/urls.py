@@ -59,6 +59,7 @@ students_router.register(
 students_router.register(
     'eligible-courses', views.StudentEligibleCourseViewSet, basename='student-enrolls')
 students_router.register('grades', views.StudentGradeAccessViewSet, basename='student-grade')
+students_router.register('school-years', views.StudentEnrollmentSchoolYearViewSet, basename='student-school-years')
 
 teachers_router = routers.NestedDefaultRouter(
     router, 'teachers', lookup='teachers')
@@ -72,6 +73,11 @@ deeply_nested_teaches_router = routers.NestedDefaultRouter(teachers_router, 'tea
 deeply_nested_teaches_router.register('grades', views.GradeViewSet)
 deeply_nested_teaches_router.register('teach-grades', views.TeacherTeachGradeViewSet, basename='teach-grades')
 
+students_router.register('schoolyears', views.FakeSchoolYearViewSet, basename='a')
+nested_sch_years_router = routers.NestedDefaultRouter(students_router, 'schoolyears', lookup='school_years')
+nested_sch_years_router.register('semesters', views.FakeSemesterViewSet, basename='b')
+nested_semesters_router = routers.NestedDefaultRouter( nested_sch_years_router, 'semesters', lookup='semesters')
+nested_semesters_router.register('grades', views.StudentSemesterGradeViewSet, basename='semester-grades')
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -81,4 +87,7 @@ urlpatterns = [
     path("", include(students_router.urls)),
     path("", include(teachers_router.urls)),
     path("", include(deeply_nested_teaches_router.urls)),
+
+    path("", include(nested_sch_years_router.urls)),
+    path("", include(nested_semesters_router.urls))
 ]

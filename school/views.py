@@ -769,6 +769,9 @@ class GradeViewSet(ModelViewSet):
     
 
 class StudentGradeAccessViewSet(ModelViewSet):
+    """
+    Returns all grades for a student more like a transcript
+    """
     http_method_names = ['get']
     serializer_class = serializers.ReadGradeSerializer
 
@@ -809,3 +812,77 @@ class TeacherTeachGradeViewSet(ModelViewSet):
         except models.Teach.DoesNotExist:
             return Response({'error': 'Record does not exist'}, status=status.HTTP_404_NOT_FOUND)
         return teach_id
+    
+
+class StudentEnrollmentSchoolYearViewSet(ModelViewSet):
+    """
+    Returns all years a student has been in school which is meant to 
+    fetch his/her grades for the selected school year and the semester.
+    """
+    http_method_names = ['get']
+    serializer_class = serializers.SchoolYearSemesterSerializer
+
+    def get_queryset(self):
+        try:
+            id = models.Student.objects.get(user_id=self.kwargs['students_pk']).user.id
+        except models.Student.DoesNotExist:
+            return Response({'error': 'Student does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        enrollments = models.Enrollment.objects.filter(student_id=id).\
+            select_related('student', 'course', 'section', 'school_year', 'semester')
+   
+        school_year_ids = set()
+
+        for enrollment in enrollments:
+            school_year_ids.add(enrollment.school_year.id)
+
+        return models.SchoolYear.objects.filter(id__in=list(school_year_ids)).prefetch_related('semesters')
+
+
+class StudentSemesterGradeViewSet(ModelViewSet):
+    """
+    Takes a student_id, school_year_id, semester_id and returns the grades. 
+    Only GET method is allowed.
+    """
+    http_method_names = ['get']
+    serializer_class = serializers.ReadGradeSerializer
+
+    def get_queryset(self):
+        student_id = self.kwargs['students_pk']
+        school_year_id = self.kwargs['school_years_pk']
+        semester_id = self.kwargs['semesters_pk']
+        try:
+            models.Student.objects.get(user_id=student_id)
+        except models.Student.DoesNotExist:
+            return Response({'error': 'Student does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            models.SchoolYear.objects.get(id=school_year_id)
+        except models.SchoolYear.DoesNotExist:
+            return Response({'error': 'School year does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            models.Semester.objects.get(id=semester_id)
+        except models.Semester.DoesNotExist:
+            return Response({'error': 'Semester does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        grades = models.Grade.objects.filter(
+            student_id=student_id, school_year_id=school_year_id, semester_id=semester_id)
+        
+        return grades
+    
+
+class FakeSchoolYearViewSet(ModelViewSet):
+    """
+    Just for accessing the school_year_id in the route for filtering a 
+    student grades based on the school year. See: StudentSemesterGradeViewSet
+    """
+    pass
+    
+
+class FakeSemesterViewSet(ModelViewSet):
+    """
+    Just for accessing the semester_id in the route for filtering a 
+    student grades based on the semester. See: StudentSemesterGradeViewSet
+    """
+    pass
+    
+

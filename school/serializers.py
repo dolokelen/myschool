@@ -651,3 +651,8 @@ class ReadGradeSerializer(serializers.ModelSerializer):
                   'assignment', 'midterm', 'project', 'final', 'letter', 'grade_point', 'total_score', 'graded_at']
 
 
+class SchoolYearSemesterSerializer(serializers.ModelSerializer):
+    semesters = SimpleSemesterSerializer(many=True)
+    class Meta:
+        model = models.SchoolYear
+        fields = ['id', 'year', 'semesters']
