@@ -15,6 +15,9 @@ class SchoolYear(models.Model):
 
 
 class Department(models.Model):
+    """
+    It could have a director and a deputy director
+    """
     # director = models.OneToOneField(
     #     'Employee', on_delete=models.SET_NULL, blank=True, null=True, related_name='director')
     # deputy_director = models.OneToOneField(
@@ -84,7 +87,10 @@ class Status(models.Model):
         abstract = True
 
 
-class Course(Status):  # preload any 1-m or m-m fields in SemesterSerializer
+class Course(Status): 
+    """
+    Course is created with along with a semester, so preload any 1-m or m-m fields in SemesterSerializer
+    """
     departments = models.ManyToManyField(Department, related_name='courses')
     code = models.CharField(max_length=50, unique=True)
     prerequisite = models.ForeignKey(
@@ -100,6 +106,9 @@ class Course(Status):  # preload any 1-m or m-m fields in SemesterSerializer
 
 
 class Semester(models.Model):
+    """
+    It could have a program_overview file field
+    """
     NAME_CHOICES = (
         ('I', 'I'),
         ('II', 'II'),
@@ -135,6 +144,9 @@ class Semester(models.Model):
 
 
 class Building(models.Model):
+    """
+    Could have a caretaker field with FK relationship on Employee
+    """
     name = models.CharField(max_length=200, unique=True)
     # care_taker = models.ForeignKey(
     # 'Employee', on_delete=models.PROTECT, null=True, blank=True, related_name='buildings')
@@ -155,18 +167,16 @@ class BuildingAddress(Address):
 
 
 class Office(models.Model):
-    # Give office a name filed!!!!
+    """
+    Instead of relying on the id field as the office name, give it a name field.
+    """
     building = models.ForeignKey(
         Building, on_delete=models.PROTECT, related_name='offices')
     dimension = models.CharField(max_length=100)
 
-    # def __str__(self) -> str:
-    # This is very terrible in performance, especially at the employee endpoint!!!
-    # return f'{self.building} - {self.id}'
-    # return f'{self.id}' #Reduces db query but not readable!
-
 
 class Document(models.Model):
+    """This class is not used in the entire project b/c of limited time."""
     FILE_CHOICES = (
         ('SCHOLAR', 'Scholarship'),
         ('ACADEMIC', 'Academic'),
@@ -193,7 +203,7 @@ class Document(models.Model):
         abstract = True
 
 
-class Person(models.Model):  # Rename it from pserson to user
+class Person(models.Model): 
     MALE = 'Male'
     FEMALE = 'Female'
     GENDER_CHOICES = (
@@ -220,9 +230,6 @@ class Person(models.Model):  # Rename it from pserson to user
 
     class Meta:
         abstract = True
-
-    # def __str__(self) -> str:
-    #     return self.user.username
 
 
 class AbstractStatus(models.Model):
@@ -305,17 +312,19 @@ class Major(models.Model):
 
 
 class Student(Status, Person):
+    """
+    Student number is not being correctly populated!
+    """
     department = models.ForeignKey(
         Department, on_delete=models.PROTECT, related_name='students')
     supervisor = models.ForeignKey(
         Teacher, on_delete=models.PROTECT, related_name='mentees')
     major = models.ForeignKey(
         Major, on_delete=models.PROTECT, related_name='students')
-    # Try to make it unique although the func is generating unique values.
     student_number = models.CharField(
         max_length=255, default=student_number_generator)
     registration_fee = models.DecimalField(
-        max_digits=6, decimal_places=2)  # Belongs to enrollment
+        max_digits=6, decimal_places=2)  # Belongs to stemester registration...but it's implementation is not clear yet.
     is_transfer = models.BooleanField(default=False)
 
 
@@ -411,7 +420,7 @@ class Enrollment(models.Model):
         SchoolYear, on_delete=models.PROTECT, related_name='enrollments')
     status = models.CharField(
         max_length=9, choices=STATUS_CHOICES, default=PENDING)
-    has_scholarship = models.BooleanField(default=False)#Remove this field, but invegistate usage first
+    has_scholarship = models.BooleanField(default=False)#Remove this field, it bolong to semester registration...but its implementation is not clear yet.
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -420,6 +429,9 @@ class Enrollment(models.Model):
 
 
 class Teach(models.Model):
+    """
+    Responsible for assigning sections to teacher
+    """
     teacher = models.ForeignKey(
         Teacher, on_delete=models.PROTECT, related_name='teaches')
     course = models.ForeignKey(
@@ -467,7 +479,11 @@ class Grade(models.Model):
         unique_together = [['student', 'school_year', 'semester', 'course', 'section']]
 
 # class SemesterEnrollment(models.Model):
-# semester
-# school_year
-# has_scholarship
-# student_status/level
+#     """
+#     This class was not used in this project because of limited time.
+#     """
+    # semester
+    # school_year
+    # has_scholarship
+    # registration_fee
+    # student_status/level
