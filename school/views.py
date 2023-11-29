@@ -34,7 +34,11 @@ class DepartmentViewSet(Permission):
     queryset = models.Department.objects.prefetch_related('courses')\
         .select_related('departmentaddress').\
         prefetch_related('departmentcontact').prefetch_related('majors').all()
-    serializer_class = serializers.DepartmentSerializer
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadDepartmentSerializer
+        return serializers.DepartmentSerializer
 
 
 class DepartmentAddressViewSet(ModelViewSet):

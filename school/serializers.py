@@ -52,11 +52,7 @@ class SimpleCourseSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     departmentaddress = DepartmentAddressSerializer()
     departmentcontact = DepartmentContactSerializer(many=True)
-    number_of_courses = serializers.SerializerMethodField()
-    courses = SimpleCourseSerializer(many=True, read_only=True)
 
-    def get_number_of_courses(self, department):
-        return department.courses.count()
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -72,6 +68,20 @@ class DepartmentSerializer(serializers.ModelSerializer):
                 department_id=instance.id, **contact_data)
 
         return instance
+
+    class Meta:
+        model = models.Department
+        fields = ['id', 'name', 'budget', 'duty', 'departmentaddress', 'departmentcontact']
+
+
+class ReadDepartmentSerializer(serializers.ModelSerializer):
+    departmentaddress = DepartmentAddressSerializer()
+    departmentcontact = DepartmentContactSerializer(many=True)
+    number_of_courses = serializers.SerializerMethodField()
+    courses = SimpleCourseSerializer(many=True, read_only=True)
+
+    def get_number_of_courses(self, department):
+        return department.courses.count()
 
     class Meta:
         model = models.Department
