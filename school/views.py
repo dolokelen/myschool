@@ -485,6 +485,38 @@ class StudentEligibleCourseViewSet(ModelViewSet):
     http_method_names = ['get']
     serializer_class = serializers.CourseAndSectionsSerializer
 
+    # def get_queryset(self):
+    #     student_id = self.kwargs['students_pk']
+    #     # You also have to ensure that the student has a passing mark for the prerequisite for that course.
+
+    #     try:
+    #         student_obj = models.Student.objects.get(user_id=student_id)
+    #     except models.Student.DoesNotExist:
+    #         return Response({'error': 'student does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+    #     student_enrollments = student_obj.enrollments.select_related('course',
+    #                                                                  'section',
+    #                                                                  'semester',
+    #                                                                  'school_year',).all()
+    #     completed_courses = [cos.course.code for cos in student_enrollments]
+
+    #     student_department = student_obj.department
+    #     department_courses = student_department.courses.select_related(
+    #         'prerequisite').prefetch_related('departments').all()
+    #     current_courses = department_courses.filter(semesters__is_current=True)
+
+    #     eligible_courses = []
+
+    #     for course in current_courses:
+    #         prerequisite = course.prerequisite
+
+    #         if (not prerequisite and course.code not in completed_courses) or \
+    #                 (prerequisite and prerequisite.code in completed_courses and course.code not in completed_courses):
+
+    #             eligible_courses.append(course)
+
+    #     return eligible_courses
+
     def get_queryset(self):
         student_id = self.kwargs['students_pk']
         # You also have to ensure that the student has a passing mark for the prerequisite for that course.
@@ -494,25 +526,30 @@ class StudentEligibleCourseViewSet(ModelViewSet):
         except models.Student.DoesNotExist:
             return Response({'error': 'student does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-        student_enrollments = student_obj.enrollments.select_related('course',
-                                                                     'section',
-                                                                     'semester',
-                                                                     'school_year',).all()
-        completed_courses = [cos.course.code for cos in student_enrollments]
-
-        student_department = student_obj.department
-        department_courses = student_department.courses.select_related(
-            'prerequisite').prefetch_related('departments').all()
+        department = student_obj.department
+        department_courses = department.courses.all()
         current_courses = department_courses.filter(semesters__is_current=True)
+
+        grades = student_obj.grades.all()
+
+        completed_courses = [
+            g.course.code
+            for g in grades
+            if all(
+            sum(int(getattr(g, category)) > 0 for category in ['attendance', 'assignment', 'quiz', 'midterm', 'project', 'final'] >= 70)
+            )
+        ]
 
         eligible_courses = []
 
         for course in current_courses:
             prerequisite = course.prerequisite
 
-            if (not prerequisite and course.code not in completed_courses) or \
-                    (prerequisite and prerequisite.code in completed_courses and course.code not in completed_courses):
-
+            if not prerequisite and course.code not in completed_courses: #I modified this line
+                # If there's no prerequisite, the course is eligible
+                eligible_courses.append(course)
+            elif prerequisite.code in completed_courses:
+                # If there's a prerequisite and the student has passed it, the course is eligible
                 eligible_courses.append(course)
 
         return eligible_courses

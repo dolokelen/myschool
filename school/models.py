@@ -424,8 +424,7 @@ class Enrollment(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = [['student', 'course',
-                            'section', 'semester', 'school_year']]
+        unique_together = [['student', 'course', 'section', 'semester', 'school_year']]
 
 
 class Teach(models.Model):

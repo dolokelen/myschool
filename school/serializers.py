@@ -531,7 +531,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Enrollment
         fields = ['id', 'student', 'course', 'section', 'semester',
-                  'school_year', 'status', 'has_scholarship', 'date']
+                  'school_year', 'status', 'has_scholarship']
 
 
 class ReadEnrollmentSerializer(serializers.ModelSerializer):
@@ -540,10 +540,18 @@ class ReadEnrollmentSerializer(serializers.ModelSerializer):
     section = SimpleSectionSerializer()
     semester = SimpleSemesterSerializer()
     school_year = SchoolYearSerializer()
+    price_per_credit = serializers.SerializerMethodField()
+    credit = serializers.SerializerMethodField()
 
+    def get_price_per_credit(self, obj):
+        return obj.course.price_per_credit
+    
+    def get_credit(self, obj):
+        return obj.course.credit
+    
     class Meta:
         model = models.Enrollment
-        fields = ['id', 'student', 'course', 'section', 'course',
+        fields = ['id', 'student', 'course', 'section', 'price_per_credit', 'credit',
                   'semester', 'school_year', 'status', 'has_scholarship', 'date']
 
 
