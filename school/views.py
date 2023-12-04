@@ -748,6 +748,7 @@ class GradeViewSet(ModelViewSet):
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             enrollments_list = self.get_enrollments_list(teach)
+            enrollments_list = [students for students in models.Student.objects.filter(user_id__in=enrollments_list).values_list('student_number', flat=True)]
 
             if len(students) != len(enrollments_list):
                 return Response({'error': 'Incomplete students listing'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -783,14 +784,22 @@ class GradeViewSet(ModelViewSet):
         excluded_indexes = [semester_row, school_year_row,
                                     course_row, section_row, student_record_header]
         return excluded_indexes
-            
+                
+    def get_student_id(self, row):
+        try:
+            student = models.Student.objects.get(student_number=row.loc[0])
+        except models.Student.DoesNotExist:
+            return Response({'error': 'Student does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return student.user.id    
+    
     @transaction.atomic()
     def create_grades(self, grades_file_rows, teach, excluded_indexes):
         for index, row in grades_file_rows.iterrows():
             if index not in excluded_indexes:
                 models.Grade.objects.create(
                 school_year_id=teach.school_year.id, semester_id=teach.semester.id, course_id=teach.course.id, 
-                section_id=teach.section.id, student_id=row.loc[0], attendance=row.loc[1], assignment=row.loc[2], 
+                section_id=teach.section.id, student_id=self.get_student_id(row), attendance=row.loc[1], assignment=row.loc[2], 
                 quiz=row.loc[3], midterm=row.loc[4], project=row.loc[5], final=row.loc[6])
                 
     def get_enrollments_list(self, teach):
